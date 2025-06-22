@@ -1,0 +1,34 @@
+.score-container{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1/1;
+  margin: 0 auto;
+}
+
+.score-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0f172a;
+  pointer-events: none;
+}
+
+.score-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0f172a;
+}
+
+.score-title {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
