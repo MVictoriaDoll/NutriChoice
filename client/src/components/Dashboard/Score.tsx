@@ -16,7 +16,7 @@ export default function Score({ nutritionScore, freshFoodsPercentage, highSugarI
   const data = [
     { name: "% fresh foods", value: freshFoodsPercentage, color: "#22c55e" },
     { name: "% high sugar items", value: highSugarItemsPercentage, color: "#f87171" },
-    { name: "% processed food", value: processedFoodPercentage , color: "#facc15" },
+    { name: "% processed food", value: processedFoodPercentage, color: "#facc15" },
   ];
   return (
     <div className="score-container">

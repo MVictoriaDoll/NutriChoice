@@ -1,7 +1,9 @@
+import './Dashboard.css';
+
 
 export default function Feedback () {
 
   return (
-    <div>some feedback</div>
+    <div className="feedback">some feedback</div>
   )
 }
