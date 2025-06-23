@@ -1,15 +1,22 @@
 import { PieChart, Pie, Cell } from "recharts";
+import type { NutritionSummary } from "../../Types/dashboard";
 import './Dashboard.css';
 
+type Props = {
+  nutritionScore: NutritionSummary['nutritionScore'];
+  freshFoodsPercentage: NutritionSummary["freshFoodsPercentage"];
+  highSugarItemsPercentage: NutritionSummary["highSugarItemsPercentage"];
+  processedFoodPercentage: NutritionSummary["processedFoodPercentage"];
+};
 
-export default function Score() {
+export default function Score({ nutritionScore, freshFoodsPercentage, highSugarItemsPercentage,processedFoodPercentage  }: Props) {
 
   // mock data  
 
   const data = [
-    { name: "% fresh foods", value: 45, color: "#22c55e" },
-    { name: "% high sugar items", value: 15, color: "#f87171" },
-    { name: "% processed food", value: 30, color: "#facc15" },
+    { name: "% fresh foods", value: freshFoodsPercentage, color: "#22c55e" },
+    { name: "% high sugar items", value: highSugarItemsPercentage, color: "#f87171" },
+    { name: "% processed food", value: processedFoodPercentage , color: "#facc15" },
   ];
   return (
     <div className="score-container">
@@ -30,7 +37,7 @@ export default function Score() {
         </Pie>
       </PieChart>
       <div className="score-text">
-        <div className="score-number">72</div>
+        <div className="score-number">{nutritionScore}</div>
         <p className="score-title">NutriScore</p>
       </div>
     </div>

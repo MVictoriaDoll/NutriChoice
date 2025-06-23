@@ -8,7 +8,13 @@ export function Dashboard () {
   return (
     <section>
       <h2>Shopping Analysis</h2>
-      <Score/>
+      <Score
+      nutritionScore={72}
+      freshFoodsPercentage={45}
+      highSugarItemsPercentage={15}
+      processedFoodPercentage={30}
+      
+      />
       <SummaryList/>
       <Feedback/>
     </section>
