@@ -1,19 +1,23 @@
-import { useState } from "react";
-import { Dashboard } from "./components/Dashboard/Dashboard";
+// src/App.tsx
 
-export default function App() {
-  const [showDashboard, setShowDashboard] = useState<boolean>(true);
+import { useState } from 'react'
+import FirstLandingPage from './components/FirstLandingPage'
+import { Dashboard } from './components/Dashboard/Dashboard'
+
+import './App.css'
+
+const App: React.FC = () => {
+  const [showDashboard] = useState<boolean>(false)
+
   return (
     <main>
       {showDashboard ? (
         <Dashboard />
-
-      ) : (<div>Welcome screen placeholder</div>)
-
-      }
-
+      ) : (
+        <FirstLandingPage />
+      )}
     </main>
-  );
+  )
 }
 
-
+export default App
