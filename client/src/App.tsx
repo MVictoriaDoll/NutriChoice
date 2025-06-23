@@ -1,27 +1,22 @@
-import type { FC } from 'react'
-import FirstLandingPage from './components/FirstLandingPage'
-import UploadFile from './components/UpoladPage'
+// src/App.tsx
 
+import { useState } from 'react'
+import FirstLandingPage from './components/FirstLandingPage'
+import { Dashboard } from './components/Dashboard/Dashboard'
 
 import './App.css'
 
-const App: FC = () => {
-  const handleFileUpload = (file: File) => {
-    console.log('The file to be uploaded', file)
-
-  }
-
+const App: React.FC = () => {
+  const [showDashboard] = useState<boolean>(false)
 
   return (
-    <>
-      <div>
-         <FirstLandingPage />
-         <UploadFile onFileUpload={handleFileUpload}/>
-
-      </div>
-
-
-    </>
+    <main>
+      {showDashboard ? (
+        <Dashboard />
+      ) : (
+        <FirstLandingPage />
+      )}
+    </main>
   )
 }
 
