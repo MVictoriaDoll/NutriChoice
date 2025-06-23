@@ -35,7 +35,7 @@ export default function SummaryList (props:Props){
       color:"#facc15",
     }, 
       {
-      label: '% good Nutri-score',
+      label: '%Nutri-score',
       value: goodNutriScorePercentage,
       icon:'✅',
       color:"#4ade80",
