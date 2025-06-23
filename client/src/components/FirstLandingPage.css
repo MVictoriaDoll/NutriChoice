@@ -1,0 +1,69 @@
+
+.FirstLandingPageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f6e8ff, #e9d5ff);
+  border-radius: 0 0 2rem 2rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.heroImg {
+  max-width: 80%;
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+.FirstLandingTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.FirstLandingSubtitle {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.FirstLandingButton {
+  background-color: #c084fc;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.FirstLandingButton:hover {
+  background-color: #a855f7;
+}
+
+/* Below are responsive design adjustment */
+@media (min-width: 768px) {
+  .FirstLandingPageContainer {
+    padding: 4rem 2rem;
+    max-width: 400px;
+    margin: auto;
+  }
+
+  .FirstLandingTitle {
+    font-size: 2rem;
+  }
+
+  .FirstLandingSubtitle {
+    font-size: 1.125rem;
+  }
+
+  .FirstLandingButton {
+    font-size: 1.125rem;
+  }
+}
