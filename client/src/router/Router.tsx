@@ -2,6 +2,7 @@ import { Route, Routes} from 'react-router-dom';
 import FirstLandingPage from '../components/FirstLandingPage';
 import UploadFile from '../components/UpoladPage';
 import { Dashboard } from '../components/Dashboard/Dashboard';
+import Feedback from '../components/Dashboard/Feedback';
 
 
 export default function Router () {
@@ -10,6 +11,7 @@ export default function Router () {
       <Route path="/" element={<FirstLandingPage />} />
       <Route path="/upload" element={<UploadFile onFileUpload={(file) => console.log('Received file:', file)} />}/>
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/feedback" element={<Feedback />} />
       </Routes>
   )
 }
