@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,21 +9,21 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
   if (!userId) {
     console.warn('Authentication failed: X-User-Id header is missing.');
     return res.status(401).json({
-      message: 'User ID (X-User-Id header) is required.'
+      message: 'User ID (X-User-Id header) is required.',
     });
   }
 
   try {
     const user = await prisma.user.upsert({
-      where: {id: userId},
+      where: { id: userId },
       update: {
-        lastLogin: new Date()  // updates the last login timestamp on every interaction.
+        lastLogin: new Date(), // updates the last login timestamp on every interaction.
       },
       create: {
         id: userId,
         displayName: `Guest-${userId.substring(0, 8)}`,
         preferences: {},
-      }
+      },
     });
 
     req.userId = user.id;
