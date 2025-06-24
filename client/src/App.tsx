@@ -1,23 +1,17 @@
-// src/App.tsx
-
-import { useState } from 'react'
-import FirstLandingPage from './components/FirstLandingPage'
-import { Dashboard } from './components/Dashboard/Dashboard'
+import Router from './router/Router';
 
 import './App.css'
 
-const App: React.FC = () => {
-  const [showDashboard] = useState<boolean>(false)
 
+const App = () => {
   return (
     <main>
-      {showDashboard ? (
-        <Dashboard />
-      ) : (
-        <FirstLandingPage />
-      )}
+      <Router />
     </main>
-  )
-}
+  );
+};
 
-export default App
+export default App;
+
+
+
