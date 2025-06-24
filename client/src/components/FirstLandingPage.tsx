@@ -2,7 +2,11 @@ import type { FC } from 'react'
 import './FirstLandingPage.css'
 import heroImg from '../assets/Animation - 1750629413888.gif'
 
-const FirstLandingPage: FC = () => {
+interface FirstLandingPageProps {
+  onStart: () => void
+}
+
+const FirstLandingPage: FC<FirstLandingPageProps> = ({ onStart }) => {
   return (
     <div className='FirstLandingPageContainer'>
       <img src={heroImg} alt="Hero Image of the first landing page" className='heroImg' />
@@ -10,7 +14,9 @@ const FirstLandingPage: FC = () => {
 
       <p className="FirstLandingSubtitle">Helping you shop smarter and eat better — one grocery trip at a time.</p>
 
-      <button className="FirstLandingButton">Scan your groceries</button>
+      <button className="FirstLandingButton" onClick={onStart}>
+        Scan your groceries
+      </button>
     </div>
   )
 }
