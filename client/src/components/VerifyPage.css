@@ -1,0 +1,141 @@
+.verify-page {
+   display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f6e8ff, #e9d5ff);
+  text-align: center;
+}
+
+.verify-label,
+.verify-suggestion,
+.verify-price,
+.verify-category {
+  font-size: 0.9rem;
+}
+
+
+.verify-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #1e1e1e;
+}
+
+.verify-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.verify-item {
+  background-color: white;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #333;
+  border: 1.5px solid #e0c9f7;
+}
+
+.verify-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.verify-label {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #4c0070;
+  font-size: 0.9rem;
+}
+.verify-suggestion {
+  font-style: italic;
+  color:  #666;
+}
+
+.verify-price {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0.25rem 0;
+  color: #444;
+  text-align: left;
+}
+
+
+.verify-price,
+.verify-food,
+.verify-category {
+  margin: 0.5rem 0;
+  color: #555;
+  font-size: 1rem;
+}
+.verify-toggle-btn {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background-color: #f3e8ff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+
+
+.verify-confirm-button {
+  background-color: #c084fc;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: background-color 0.3s ease;
+}
+
+.verify-confirm-button:hover {
+  background-color: #a855f7;
+}
+
+.verify-input{
+    margin-top: 0.3rem;
+  padding: 0.4rem;
+  border: 1.5px solid #d3b1f9;
+  border-radius: 10px;
+  width: 100%;
+  font-size: 0.85rem;
+  text-align: center;
+  color: #4c0070;
+}
+
+
+
+@media (min-width: 768px) {
+  .verify-page {
+    padding: 4rem 2rem;
+    max-width: 600px;
+    margin: auto;
+  }
+
+  .verify-title {
+    font-size: 2.25rem;
+  }
+
+  .verify-label,
+  .verify-suggestion {
+    font-size: 1.125rem;
+  }
+
+  .verify-toggle-btn {
+    font-size: 1.5rem;
+  }
+}

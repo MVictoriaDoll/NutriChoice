@@ -10,11 +10,18 @@ dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') 
 const config = {
     port: process.env.PORT || 3000,
     databaseUrl: process.env.DATABASE_URL,
-    frondendBuildPath: path_1.default.join(__dirname, '..', '..', '..', 'client', 'dist'),
+    frontendBuildPath: path_1.default.join(__dirname, '..', '..', '..', 'client', 'dist'),
     nodeEnv: process.env.NODE_ENV || 'development',
+    //Langchain Google integration
+    googleApiKey: process.env.GOOGLE_API_KEY,
+    geminiModelName: process.env.GEMINI_MODEL_NAME || 'gemini-2.5-flash',
 };
 if (!config.databaseUrl) {
     console.error('FATAL ERROR: DATABASE_URL is not defined in .env');
+    process.exit(1);
+}
+if (!config.googleApiKey) {
+    console.error('FATAL ERROR: GOOGLE_API_KEY is not defined in .env. Required for AI processing.');
     process.exit(1);
 }
 if (!process.env.NODE_ENV) {

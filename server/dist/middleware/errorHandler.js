@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = void 0;
 const config_1 = __importDefault(require("../config"));
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
     console.error(`[ERROR] Unhandled error: ${err.message}`);
     if (err.stack && config_1.default.nodeEnv === 'development') {
         console.error(err.stack); // only in dev

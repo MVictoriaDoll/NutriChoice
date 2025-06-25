@@ -9,6 +9,8 @@ type Props = {
   processedFoodPercentage: NutritionSummary["processedFoodPercentage"];
 };
 
+
+// Score component: renders the donut chart and score text.
 export default function Score({ nutritionScore, freshFoodsPercentage, highSugarItemsPercentage,processedFoodPercentage  }: Props) {
 
   // mock data  
@@ -20,17 +22,18 @@ export default function Score({ nutritionScore, freshFoodsPercentage, highSugarI
   ];
   return (
     <div className="score-container">
+      {/* Donut chart */}
       <PieChart width={220} height={220}>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
-          innerRadius={75}
-          outerRadius={90}
+          innerRadius={90}
+          outerRadius={105}
           dataKey="value"
           startAngle={90}
           endAngle={-270}
-        >
+        >{/* Each slice uses its color */}
           {data.map((entry, index) => (
             <Cell key={index} fill={entry.color} />
           ))}
