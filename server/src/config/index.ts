@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const config = {
   port: process.env.PORT || 3000,
   databaseUrl: process.env.DATABASE_URL as string,
-  frondendBuildPath: path.join(__dirname, '..', '..', '..', 'client', 'dist'),
+  frontendBuildPath: path.join(__dirname, '..', '..', '..', 'client', 'dist'),
   nodeEnv: process.env.NODE_ENV || 'development',
   //Langchain Google integration
   googleApiKey: process.env.GOOGLE_API_KEY as string,

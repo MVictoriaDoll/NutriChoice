@@ -12,6 +12,7 @@ interface ReceiptNutritionSummaryJson {
 }
 
 export const receiptService = {
+  
   createReceiptAndProcessData: async (
     userId: string,
     fileOriginalName: string,
@@ -104,6 +105,8 @@ export const receiptService = {
     });
     return updatedReceipt;
   },
+
+  
   _processAndAggregateUserNutrition: async (prismaTx: Prisma.TransactionClient, userId: string) => {
     // Aggregate based on receipts that are either 'processed' or 'verified'
     const allRelevantReceipts = await prismaTx.receipt.findMany({

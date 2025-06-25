@@ -1,16 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+export const authenticateUser: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
 
   if (!userId) {
     console.warn('Authentication failed: X-User-Id header is missing.');
-    return res.status(401).json({
+    res.status(401).json({
       message: 'User ID (X-User-Id header) is required.',
     });
+    return;
   }
 
   try {

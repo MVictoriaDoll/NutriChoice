@@ -7,9 +7,10 @@ const authenticateUser = async (req, res, next) => {
     const userId = req.headers['x-user-id'];
     if (!userId) {
         console.warn('Authentication failed: X-User-Id header is missing.');
-        return res.status(401).json({
+        res.status(401).json({
             message: 'User ID (X-User-Id header) is required.',
         });
+        return;
     }
     try {
         const user = await prisma.user.upsert({
