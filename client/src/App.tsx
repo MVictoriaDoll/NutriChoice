@@ -1,17 +1,13 @@
-import Router from './router/Router';
-
+import type { FC } from 'react'
+import Router from './router/Router'
 import './App.css'
 
-
-const App = () => {
+const App: FC = () => {
   return (
-    <main>
+    <main className="app-container">
       <Router />
     </main>
-  );
-};
+  )
+}
 
-export default App;
-
-
-
+export default App
