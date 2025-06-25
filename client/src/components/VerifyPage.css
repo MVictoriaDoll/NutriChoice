@@ -35,14 +35,14 @@
   max-width: 400px;
 }
 
-.verify-item{
-  background: #fff;
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.verify-item {
+  background-color: white;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #333;
+  border: 1.5px solid #e0c9f7;
 }
 
 .verify-item:hover {
@@ -51,15 +51,14 @@
 }
 
 .verify-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #444;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #4c0070;
+  font-size: 0.9rem;
 }
-
 .verify-suggestion {
   font-style: italic;
-  color:  #444;
-  font-size: 1rem;
+  color:  #666;
 }
 
 .verify-price {
@@ -72,25 +71,23 @@
 
 
 .verify-price,
+.verify-food,
 .verify-category {
+  margin: 0.5rem 0;
+  color: #555;
   font-size: 1rem;
-  color: #333;
 }
 .verify-toggle-btn {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background-color: #f3e8ff;
-  border: none;
-  color: #7c3aed;
-  font-size: 1.2rem;
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
 }
 
 
-.verify-toggle-btn:hover {
-  background-color: #e9d5ff;
-}
 
 .verify-confirm-button {
   background-color: #c084fc;
@@ -108,6 +105,18 @@
 .verify-confirm-button:hover {
   background-color: #a855f7;
 }
+
+.verify-input{
+    margin-top: 0.3rem;
+  padding: 0.4rem;
+  border: 1.5px solid #d3b1f9;
+  border-radius: 10px;
+  width: 100%;
+  font-size: 0.85rem;
+  text-align: center;
+  color: #4c0070;
+}
+
 
 
 @media (min-width: 768px) {

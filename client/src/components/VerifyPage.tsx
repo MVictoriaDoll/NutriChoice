@@ -2,7 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import './VerifyPage.css';
 
+
 export default function VerifyPage() {
+  // Initial state with mock items (simulating the uploaded receipt data)
   const [items, setItems] = useState([
     {
       id: '1',
@@ -23,10 +25,12 @@ export default function VerifyPage() {
     }
   ]);
   const navigate = useNavigate();
-
+    // Navigate to the dashboard when user confirms the list
   const handleConfirm = () =>   {
     navigate('/dashboard');
   }
+
+  // Toggle food icon when user clicks the button
 
   const toggleIsFood = (id: string) => {
 
@@ -36,6 +40,15 @@ export default function VerifyPage() {
     setItems(updatedItems);
 
   };
+   // Update AI-suggested name when user types in the input
+
+  const handleAiSuggestedName = (id:string, newValue:string) => {
+    const updatedItems = items.map(item =>
+      item.id === id ? { ...item, aiSuggestedName: newValue } : item
+    );
+    setItems(updatedItems);
+
+  }
 
 
   return (
@@ -44,12 +57,19 @@ export default function VerifyPage() {
       <ul className='verify-list'>
         {items.map(item => (
           <li key={item.id} className='verify-item'>
+             {/* Original product label as shown on the receipt */}
             <p className='verify-label'>Original label: {item.originalBillLabel}</p>
-            <p className='verify-suggestion'>AI suggestion: {item.aiSuggestedName}</p>
+              {/* Editable input for AI-suggested name */}
+            <p className='verify-suggestion'>
+              AI suggestion: 
+             <input className='verify-input' type="text" value={item.aiSuggestedName} onChange={(e)=> handleAiSuggestedName(item.id, e.target.value)} />
+             </p>
+              {/* Price as shown on the receipt (not editable) */}
             <p className='verify-price'>Price: ${item.price}</p>
-            <p className='verify-food'>Is Food: {''}
+            {/* Toggle to mark if item is food or not */}
+            <p className='verify-food'> {/*Is Food: {''}*/}
               <button className='verify-toggle-btn' onClick={() => toggleIsFood(item.id)}>
-                {item.isFoodItem ? '✅' : '❌'}
+                {item.isFoodItem ? 'Is Food 🍎' : 'Not Food 🚫'}
               </button>
             </p>
             <p className='verify-category'>Category: {item.classification}</p>
@@ -57,6 +77,7 @@ export default function VerifyPage() {
           </li>
         ))}
       </ul>
+      {/* Confirm and go to the dashboard */}
       <button className="verify-confirm-button" onClick={handleConfirm}>
         Confirm and continue
       </button>
