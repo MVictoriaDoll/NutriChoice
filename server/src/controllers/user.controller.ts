@@ -1,16 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { PrismaClient } from '@prisma/client';
 import config from '../config';
 
 const prisma = new PrismaClient();
 
-export const getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserProfile: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
 
   if (!userId) {
     console.error('Error in getUserProfile: userId is missing after authentication middleware.');
     // 401 unauthorized
-    return res.status(401).json({ message: 'Unauthenticated user.' });
+    res.status(401).json({ message: 'Unauthenticated user.' });
+    return;
   }
 
   try {
@@ -35,14 +36,15 @@ export const getUserProfile = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const updateUserProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUserProfile: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
   const { displayName, preferences } = req.body;
 
   if (!userId) {
     console.error('Error in updateUserProfile: userId is missing after authentication middleware.');
     // 401 unauthorized
-    return res.status(401).json({ message: 'Unauthenticated user.' });
+    res.status(401).json({ message: 'Unauthenticated user.' });
+    return;
   }
 
   try {
