@@ -1,9 +1,14 @@
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+//import type { Item } from '../Types/verifypage';
 import './VerifyPage.css';
 
 
 export default function VerifyPage() {
+  //const [items, setItems] = useState<Item[]>([]);
+
+  //const {receiptId} = useParams();
+  
   // Initial state with mock items (simulating the uploaded receipt data)
   const [items, setItems] = useState([
     {
@@ -24,11 +29,41 @@ export default function VerifyPage() {
 
     }
   ]);
+
+
   const navigate = useNavigate();
     // Navigate to the dashboard when user confirms the list
   const handleConfirm = () =>   {
     navigate('/dashboard');
   }
+  
+/*useEffect (() => {
+  if(!receiptId) return;
+  const fetchReceiptItems = async () => {
+    try {
+      const response = await fetch (`http://localhost:3000/receipts/${receiptId}`, {
+        headers: {
+          'X-User-Id': 'test-user-123',
+
+        },
+      });
+
+      if(!response.ok) {
+        throw new Error('Failed to fetch receipt');
+      }
+
+      const data = await response.json();
+      console.log('data recibida del backend:', data);
+      setItems(data.items || []);
+
+    } catch (error){
+      console.error('Erro fetching receip', error)
+    }
+  };
+  fetchReceiptItems();
+}, [receiptId]);*/
+
+
 
   // Toggle food icon when user clicks the button
 
