@@ -137,7 +137,9 @@ export const receiptService = {
     let totalGoodNutri = 0;
     let analyzedReceiptCount = 0;
 
-    allRelevantReceipts.forEach((receipt: { nutritionSummary: ReceiptNutritionSummaryJson }) => {
+    //allRelevantReceipts.forEach((receipt: { nutritionSummary: ReceiptNutritionSummaryJson }) => {
+ /*    allRelevantReceipts.forEach(receipt => {
+      const summary = receipt.nutritionSummary as ReceiptNutritionSummaryJson;
       if (receipt.nutritionSummary && isReceiptNutritionSummary(receipt.nutritionSummary)) {
         const summary = receipt.nutritionSummary;
         totalCalculatedScore += summary.calculatedScore || 0;
@@ -147,7 +149,24 @@ export const receiptService = {
         totalGoodNutri += summary.goodNutriScore || 0;
         analyzedReceiptCount++;
       }
+    }); */
+
+    allRelevantReceipts.forEach((receipt: { nutritionSummary: unknown }) => {
+      if (
+        receipt.nutritionSummary != null &&
+        isReceiptNutritionSummary(receipt.nutritionSummary)
+      ) {
+        const summary = receipt.nutritionSummary;
+
+        totalCalculatedScore += summary.calculatedScore || 0;
+        totalFreshFoods       += summary.freshFoods      || 0;
+        totalHighSugar        += summary.highSugarItems  || 0;
+        totalProcessed        += summary.processedFood   || 0;
+        totalGoodNutri        += summary.goodNutriScore  || 0;
+        analyzedReceiptCount++;
+      }
     });
+
 
     const avgNutritionScore =
       analyzedReceiptCount > 0 ? totalCalculatedScore / analyzedReceiptCount : 0;
