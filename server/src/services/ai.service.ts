@@ -49,26 +49,26 @@ const RECEIPT_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
         - Output ONLY the JSON object. Do NOT include any other text or markdown formatting outside the JSON.
         `
   ),
-  HumanMessagePromptTemplate.fromTemplate(`
-  Analyze this grocery receipt. Here is the document and the expected JSON schema:
-  {{
-    "purchaseDate": "YYYY-MM-DD",
-    "totalAmount": "number",
-    "currency": "string",
-    "originalRawText": "string", // Raw text detected by OCR from the entire receipt
-    "items": [
-      {{
-        "originalBillLabel": "string",
-        "aiSuggestedName": "string",
-        "price": "number",
-        "isFoodItem": "boolean",
-        "nutritionDetails": {{}}, // Placeholder for future detailed nutrition data (can be empty object)
-        "classification": "string" // e.g., "Fresh Food", "Processed", "High Sugar", "Good Nutri-Score", "Other"
-      }}
-    ]
+  HumanMessagePromptTemplate.fromTemplate(
+    `Analyze this grocery receipt. Here is the document and the expected JSON schema:
+        {{
+          "purchaseDate": "YYYY-MM-DD",
+          "totalAmount": "number",
+          "currency": "string",
+          "originalRawText": "string", // Raw text detected by OCR from the entire receipt
+          "items": [
+            {{
+              "originalBillLabel": "string",
+              "aiSuggestedName": "string",
+              "price": "number",
+              "isFoodItem": "boolean",
+              "nutritionDetails": {}, // Placeholder for future detailed nutrition data (can be empty object)
+              "classification": "string" // e.g., "Fresh Food", "Processed", "High Sugar", "Good Nutri-Score", "Other"
   }}
-  Document data: {image_data}
-  `),
+          ]
+  }}
+        Document data: {image_data}`
+  ),
 ]);
 
 export interface AIReceiptData {

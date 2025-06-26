@@ -21,7 +21,7 @@ app.use('/api', authenticateUser);
 app.use('/api', apiRoutes);
 
 app.use(express.static(config.frontendBuildPath));
-app.get('*', (req, res) => {
+app.get('/*foo', (req, res) => {
   res.sendFile(path.join(config.frontendBuildPath, 'index.html'));
 });
 
