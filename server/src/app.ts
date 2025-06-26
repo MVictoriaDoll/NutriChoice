@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import listEndpoints from 'express-list-endpoints';
 import { authenticateUser } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import apiRoutes from './routes'
@@ -20,16 +19,6 @@ app.use(express.urlencoded({extended: true}))
 
 app.use('/api', authenticateUser);
 app.use('/api', apiRoutes);
-
-// ---- DEBUG ----
-
-
-console.log('\n⇣ ROUTES LOADED ⇣');
-for (const r of listEndpoints(app)) {
-  console.log(`${r.methods.join(',').padEnd(10)} ${r.path}`);
-}
-console.log('⇡ ROUTES LOADED ⇡\n');
-// --------------—
 
 app.use(express.static(config.frontendBuildPath));
 app.get('/*foo', (req, res) => {
