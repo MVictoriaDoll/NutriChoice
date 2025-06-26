@@ -1,16 +1,16 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-//import type { Item } from '../Types/verifypage';
+import type { Item } from '../Types/verifypage';
 import './VerifyPage.css';
 
 
 export default function VerifyPage() {
-  //const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
-  //const {receiptId} = useParams();
+  const {receiptId} = useParams();
   
   // Initial state with mock items (simulating the uploaded receipt data)
-  const [items, setItems] = useState([
+  /*const [items, setItems] = useState([
     {
       id: '1',
       originalBillLabel: 'Chocapic',
@@ -28,16 +28,43 @@ export default function VerifyPage() {
       classification: 'Processed',
 
     }
-  ]);
+  ]);*/
 
 
   const navigate = useNavigate();
     // Navigate to the dashboard when user confirms the list
-  const handleConfirm = () =>   {
-    navigate('/dashboard');
+  const handleConfirm = async () =>   {
+    if(!receiptId) return;
+
+    try{
+      const response = await fetch (`http://localhost:3000/receipts/${receiptId}/verify`, {
+        method: 'PUT',
+        headers:{
+          'Content-type': 'application/json',
+          'X-User-Id': 'test-user-123',
+        }, 
+        body: JSON.stringify({
+            items,
+          nutritionSummary: {},
+          aiFeedbackReceipt: "",
+
+        }),
+      });
+      
+      if(!response.ok) {
+        throw new Error('Fail to submit verification')
+      }
+      
+      navigate('/dashboard');
+
+    } catch(error){
+      console.log('Error verifying receipt:', error);
+      alert('There was an error verifying your receipt');
+    }
+
   }
   
-/*useEffect (() => {
+useEffect (() => {
   if(!receiptId) return;
   const fetchReceiptItems = async () => {
     try {
@@ -61,7 +88,7 @@ export default function VerifyPage() {
     }
   };
   fetchReceiptItems();
-}, [receiptId]);*/
+}, [receiptId]);
 
 
 
@@ -84,6 +111,8 @@ export default function VerifyPage() {
     setItems(updatedItems);
 
   }
+
+  
 
 
   return (
