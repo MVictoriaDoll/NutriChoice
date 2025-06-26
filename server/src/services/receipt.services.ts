@@ -3,7 +3,7 @@ import { AIReceiptData } from './ai.service';
 
 const prisma = new PrismaClient();
 
-interface ReceiptNutritionSummaryJson {
+interface ReceiptNutritionSummaryJson extends Record<string, unknown>{
   calculatedScore: number;
   freshFoods: number;
   highSugarItems: number;
@@ -11,8 +11,24 @@ interface ReceiptNutritionSummaryJson {
   goodNutriScore: number;
 }
 
+function isReceiptNutritionSummary(summary: unknown): summary is ReceiptNutritionSummaryJson {
+    if (typeof summary !== 'object' || summary === null) {
+        return false;
+    }
+
+    const potentialSummary = summary as Record<string, unknown>; // Cast to a record to check properties safely
+
+    return (
+        'calculatedScore' in potentialSummary && typeof potentialSummary.calculatedScore === 'number' &&
+        'freshFoods' in potentialSummary && typeof potentialSummary.freshFoods === 'number' &&
+        'highSugarItems' in potentialSummary && typeof potentialSummary.highSugarItems === 'number' &&
+        'processedFood' in potentialSummary && typeof potentialSummary.processedFood === 'number' &&
+        'goodNutriScore' in potentialSummary && typeof potentialSummary.goodNutriScore === 'number'
+    );
+}
+
 export const receiptService = {
-  
+
   createReceiptAndProcessData: async (
     userId: string,
     fileOriginalName: string,
@@ -32,13 +48,13 @@ export const receiptService = {
           status: 'processed', // status after AI processing
           userId: userId,
           // Basic summary (AI Generated)
-          nutritionSummary: {
+          nutritionSummary: JSON.parse(JSON.stringify({
             calculatedScore: 0,
             freshFoods: 0,
             highSugarItems: 0,
             processedFood: 0,
             goodNutriScore: 0,
-          },
+          })),
           aiFeedbackReceipt: 'Initial AI analysis complete. Verify items',
         },
       });
@@ -49,7 +65,7 @@ export const receiptService = {
           aiSuggestedName: item.aiSuggestedName || '',
           price: item.price !== null ? item.price : 0,
           isFoodItem: typeof item.isFoodItem === 'boolean' ? item.isFoodItem : false,
-          nutritionDetails: item.isFoodItem ? item.nutritionDetails || {} : {},
+          nutritionDetails: item.isFoodItem ? JSON.parse(JSON.stringify(item.nutritionDetails || {})) : JSON.parse(JSON.stringify({})),
           classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
           manualCorrection: false,
           receiptId: newReceipt.id,
@@ -79,7 +95,7 @@ export const receiptService = {
       const receipt = await prismaTx.receipt.update({
         where: { id: receiptId, userId: userId },
         data: {
-          nutritionSummary: nutritionSummary || {},
+          nutritionSummary: JSON.parse(JSON.stringify(nutritionSummary || {})),
           aiFeedbackReceipt: aiFeedbackReceipt || undefined,
           status: 'verified',
         },
@@ -92,7 +108,7 @@ export const receiptService = {
           aiSuggestedName: item.aiSuggestedName || '',
           price: item.price !== null ? item.price : 0,
           isFoodItem: typeof item.isFoodItem === 'boolean' ? item.isFoodItem : false,
-          nutritionSummary: item.isFoodItem ? item.nutritionDetails || {} : {},
+          nutritionDetails: item.isFoodItem ? JSON.parse(JSON.stringify(item.nutritionDetails || {})) : JSON.parse(JSON.stringify({})),
           classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
           manualCorrection: true,
           receiptId: receipt.id,
@@ -106,7 +122,7 @@ export const receiptService = {
     return updatedReceipt;
   },
 
-  
+
   _processAndAggregateUserNutrition: async (prismaTx: Prisma.TransactionClient, userId: string) => {
     // Aggregate based on receipts that are either 'processed' or 'verified'
     const allRelevantReceipts = await prismaTx.receipt.findMany({
@@ -122,8 +138,8 @@ export const receiptService = {
     let analyzedReceiptCount = 0;
 
     allRelevantReceipts.forEach((receipt) => {
-      if (receipt.nutritionSummary) {
-        const summary = receipt.nutritionSummary as ReceiptNutritionSummaryJson;
+      if (receipt.nutritionSummary && isReceiptNutritionSummary(receipt.nutritionSummary)) {
+        const summary = receipt.nutritionSummary;
         totalCalculatedScore += summary.calculatedScore || 0;
         totalFreshFoods += summary.freshFoods || 0;
         totalHighSugar += summary.highSugarItems || 0;
@@ -152,7 +168,7 @@ export const receiptService = {
       where: { userId: userId },
       update: {
         nutritionScore: avgNutritionScore,
-        freshFoodPercentage: avgFreshFoods,
+        freshFoodsPercentage: avgFreshFoods,
         highSugarItemsPercentage: avgHighSugar,
         processedFoodPercentage: avgProcessed,
         goodNutriScorePercentage: avgGoodNutri,
@@ -161,7 +177,7 @@ export const receiptService = {
       create: {
         userId: userId,
         nutritionScore: avgNutritionScore,
-        freshFoodPercentage: avgFreshFoods,
+        freshFoodsPercentage: avgFreshFoods,
         highSugarItemsPercentage: avgHighSugar,
         processedFoodPercentage: avgProcessed,
         goodNutriScorePercentage: avgGoodNutri,
@@ -180,7 +196,7 @@ export const receiptService = {
   getAllReceipts: async (userId: string) => {
     return await prisma.receipt.findMany({
       where: { userId: userId },
-      orderBy: { purchasedDate: 'desc' },
+      orderBy: { purchaseDate: 'desc' },
     });
   },
 };

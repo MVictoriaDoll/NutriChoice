@@ -9,9 +9,9 @@
     "skipLibCheck": true,           /* Skip type checking of declaration files. IMPORTANT for node_modules/@types. */
     "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references. */
     "baseUrl": ".",                 /* This is important for module resolution, especially with 'paths'. */
-    // "paths": {                     /* Optional: For absolute imports like '@/module' */
-    //   "@/*": ["./src/*"]
-    // }
+    "paths": {                     /* Optional: For absolute imports like '@/module' */
+      "@/*": ["./src/*"]
+    },
     "typeRoots": ["./node_modules/@types", "./src/@types"]
   },
   "include": [

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { aiService } from 'src/services/ai.service';
-import { receiptService } from 'src/services/receipt.services';
+import { aiService } from '../services/ai.service';
+import { receiptService } from '../services/receipt.services';
 
 // Upload receipt page and AI to database
 export const uploadReceipt: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {

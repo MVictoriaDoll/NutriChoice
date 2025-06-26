@@ -29,6 +29,6 @@ router.get('/:receiptId', getReceiptById);
 
 router.get('/', getAllReceipts);
 
-router.put(':/receiptId/verify', verifyAndFinalizeReceipt);
+router.put('/:receiptId', verifyAndFinalizeReceipt);
 
 export default router;
