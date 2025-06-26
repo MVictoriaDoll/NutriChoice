@@ -1,4 +1,4 @@
-import config from 'src/config';
+import config from '../config';
 
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import {
@@ -51,22 +51,22 @@ const RECEIPT_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
   ),
   HumanMessagePromptTemplate.fromTemplate(
     `Analyze this grocery receipt. Here is the document and the expected JSON schema:
-        {
+        {{
           "purchaseDate": "YYYY-MM-DD",
           "totalAmount": "number",
           "currency": "string",
           "originalRawText": "string", // Raw text detected by OCR from the entire receipt
           "items": [
-            {
+            {{
               "originalBillLabel": "string",
               "aiSuggestedName": "string",
               "price": "number",
               "isFoodItem": "boolean",
               "nutritionDetails": {}, // Placeholder for future detailed nutrition data (can be empty object)
               "classification": "string" // e.g., "Fresh Food", "Processed", "High Sugar", "Good Nutri-Score", "Other"
-            }
+  }}
           ]
-        }
+  }}
         Document data: {image_data}`
   ),
 ]);
