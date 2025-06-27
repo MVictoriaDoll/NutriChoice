@@ -6,6 +6,7 @@ import {
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from '@langchain/core/prompts';
+import { SystemMessage } from '@langchain/core/messages';
 
 const chatModel = new ChatGoogleGenerativeAI({
   model: config.geminiModelName,
@@ -31,24 +32,22 @@ const IMAGE_VALIDATION_PROMPT = ChatPromptTemplate.fromMessages([
   imageValidationHumanPrompt
 ]);
 
-// const EXPECTED_JSON_SCHEMA = `{
-//   "purchaseDate": "YYYY-MM-DD",
-//   "totalAmount": "number",
-//   "currency": "string",
-//   "originalRawText": "string",
-//   "items": [
-//     {
-//       "originalBillLabel": "string",
-//       "aiSuggestedName": "string",
-//       "price": "number",
-//       "isFoodItem": "boolean",
-//       "nutritionDetails": {},
-//       "classification": "string"
-//     }
-//   ]
-// }`;
+const receiptTextExtractionSystemPrompt = new SystemMessage(
+  `You are an expert Pdf to text converter. Your sole purpose is to extract every piece of text from the provided document.
+  - Do not add any commentary, explanations, or formatting like markdown.
+  - If the document is in another language, do not translate it. Return the text in its original language.`
+);
+const receiptTextExtractionHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+  `Analyze this grocery receipt document: {image_data}`
+);
 
-const receiptAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+const OCR_PROMPT = ChatPromptTemplate.fromMessages([
+  receiptTextExtractionSystemPrompt,
+  receiptTextExtractionHumanPrompt
+])
+
+/*
+const receiptAnalysisSystemMessage = new SystemMessage(
   `You are an expert grocery receipt analyst. Your task is to accurately extract structured information from a grocery receipt document (image or PDF).
   **Important:** The receipt might be in German. Translate all extracted textual values (except 'originalBillLabel') into English.
   Return the data as a single JSON object.
@@ -63,6 +62,25 @@ const receiptAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
     f. For 'classification' (if isFoodItem is true), categorize each item as "Fresh Food", "Processed", "High Sugar", "Good Nutri-Score", or "Other" based on common understanding.
   General rules:
   - If 'purchaseDate', 'totalAmount', or 'currency' are not explicitly visible, make a reasonable guess or set to null/empty string. Translate 'currency' to its English abbreviation (e.g., "EUR" for "Euro").
+  Here is the exact JSON schema you must follow:
+  \`\`\`json
+  {
+    "purchaseDate": "YYYY-MM-DD",
+    "totalAmount": "number",
+    "currency": "string",
+    "originalRawText": "string",
+    "items": [
+      {
+        "originalBillLabel": "string",
+        "aiSuggestedName": "string",
+        "price": "number",
+        "isFoodItem": "boolean",
+        "nutritionDetails": {},
+        "classification": "string"
+      }
+    ]
+  }
+  \`\`\`
   - Output ONLY the JSON object. Do NOT include any other text or markdown formatting outside the JSON.`
   );
 const receiptAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
@@ -70,11 +88,11 @@ const receiptAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
 );
 
 const RECEIPT_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
-  receiptAnalysisSystemPrompt,
+  receiptAnalysisSystemMessage,
   receiptAnalysisHumanPrompt,
 ]);
+*/
 
-console.log(RECEIPT_ANALYSIS_PROMPT);
 
 export interface AIReceiptData {
   purchaseDate: string | null;
@@ -110,31 +128,62 @@ export const aiService = {
     return isValidReceiptText === 'TRUE';
   },
 
-  analyzeReceipt: async (
+  extractRawText: async (
     base64Image: string,
     mimeType: string
-  ): Promise<AIReceiptData> => {
-    const formattedAnalysisPrompt = await RECEIPT_ANALYSIS_PROMPT.formatMessages({
-      // json_schema: EXPECTED_JSON_SCHEMA,
+  ): Promise<string> => {
+    const formattedExtractionPrompt = await OCR_PROMPT.formatMessages({
       image_data: {
         type: 'image_url',
         mime_type: mimeType,
-        url: `data:${mimeType};base64,${base64Image}`,
+        url:`data${mimeType};base64,${base64Image}`,
       },
     });
 
-    const aiResponse = await chatModel.invoke(formattedAnalysisPrompt);
+    const response = await chatModel.invoke(formattedExtractionPrompt);
+    const rawText = (response.content as string);
 
-    const aiParsedDataText = aiResponse.content as string;
-    const cleanJsonString = (aiParsedDataText)
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    const parsedReceiptData: AIReceiptData = JSON.parse(cleanJsonString);
-    if (!parsedReceiptData.items || !Array.isArray(parsedReceiptData.items)) {
-      throw new Error('AI response did not contain a valid "items" array.');
+    if(!rawText || rawText.trim() === ''){
+      throw new Error('AI_OCR_FAILED');
     }
-    return parsedReceiptData;
+    return rawText.trim();
   },
+
+  // analyzeReceipt: async (
+  //   base64Image: string,
+  //   mimeType: string
+  // ): Promise<AIReceiptData> => {
+  //   const formattedAnalysisPrompt = await RECEIPT_ANALYSIS_PROMPT.formatMessages({
+  //     // json_schema: EXPECTED_JSON_SCHEMA,
+  //     image_data: {
+  //       type: 'image_url',
+  //       mime_type: mimeType,
+  //       url: `data:${mimeType};base64,${base64Image}`,
+  //     },
+  //   });
+
+  //   const aiResponse = await chatModel.invoke(formattedAnalysisPrompt);
+  //   const aiContent = aiResponse.content;
+  //   let jsonString: string;
+
+  //   if(typeof aiContent === 'string') {
+  //     jsonString = aiContent;
+  //   } else if (Array.isArray(aiContent) && aiContent.length > 0 && 'text' in aiContent[0]) {
+  //     //for case where content is structured block like [{ type: 'text', text:'...' }]
+  //     jsonString = (aiContent[0] as { text: string}).text;
+  //   } else {
+  //     throw new Error(`Unexpected AI response format. Expected string or content array. Received: ${JSON.stringify(aiContent)}`)
+  //   }
+
+  //   const cleanJsonString = (jsonString)
+  //     .replace(/```json/g, '')
+  //     .replace(/```/g, '')
+  //     .trim();
+
+  //   const parsedReceiptData: AIReceiptData = JSON.parse(cleanJsonString);
+  //   if (!parsedReceiptData.items || !Array.isArray(parsedReceiptData.items)) {
+  //     throw new Error('AI response did not contain a valid "items" array.');
+  //   }
+  //   return parsedReceiptData;
+  // },
 };
