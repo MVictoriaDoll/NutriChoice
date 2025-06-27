@@ -19,7 +19,6 @@
 // src/api/receipts.ts
 export async function uploadReceipt(file: File): Promise<{ url: string }> {
   const formData = new FormData()
-  // ⚠️ multer 里是 receiptFile
   formData.append('receiptFile', file)
   const resp = await fetch('/api/receipts/upload', {
     method: 'POST',
@@ -27,7 +26,7 @@ export async function uploadReceipt(file: File): Promise<{ url: string }> {
     body: formData,
   })
   if (!resp.ok) {
-    // 读取后端返回的文本／JSON
+    // Read the text/JSON returned by the back end
     const text = await resp.text()
     console.error('Upload failed:', resp.status, text)
     throw new Error(`Upload failed: ${resp.status} ${text}`)
