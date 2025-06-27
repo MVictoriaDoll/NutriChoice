@@ -1,9 +1,12 @@
-export async function uploadReceipt(file: File): Promise<{ url: string }> {
+/* export async function uploadReceipt(file: File): Promise<{ url: string }> {
   const formData = new FormData()
-  formData.append('receipt', file)
+  formData.append('receiptFile', file)
 
   const resp = await fetch('/api/receipts/upload', {
     method: 'POST',
+    headers: {
+      'X-User-Id': '614b37296a124db40ae74d21',
+    },
     body: formData,
   })
 
@@ -11,7 +14,25 @@ export async function uploadReceipt(file: File): Promise<{ url: string }> {
     throw new Error(`Upload failed: ${resp.statusText}`)
   }
   return resp.json()  // we assume it would return { url: 'https://...' }
-}
+} */
 
+// src/api/receipts.ts
+export async function uploadReceipt(file: File): Promise<{ url: string }> {
+  const formData = new FormData()
+  // ⚠️ multer 里是 receiptFile
+  formData.append('receiptFile', file)
+  const resp = await fetch('/api/receipts/upload', {
+    method: 'POST',
+    headers: { 'X-User-Id': '507f1f77bcf86cd799439011' },
+    body: formData,
+  })
+  if (!resp.ok) {
+    // 读取后端返回的文本／JSON
+    const text = await resp.text()
+    console.error('Upload failed:', resp.status, text)
+    throw new Error(`Upload failed: ${resp.status} ${text}`)
+  }
+  return resp.json()
+}
 
 
