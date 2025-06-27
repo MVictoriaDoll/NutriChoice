@@ -3,6 +3,7 @@ import cors from 'cors';
 import { authenticateUser } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import apiRoutes from './routes'
+import receiptRoutes from './routes/receipt.routes'
 import config from './config';
 import path from 'path';
 
@@ -17,7 +18,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 
+app.use('/uploads',express.static(path.join(__dirname, '../uploads')));
 app.use('/api', authenticateUser);
+app.use('/api/receipts', receiptRoutes)
 app.use('/api', apiRoutes);
 
 app.use(express.static(config.frontendBuildPath));

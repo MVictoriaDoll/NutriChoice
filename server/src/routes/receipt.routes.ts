@@ -5,6 +5,8 @@ import {
   getReceiptById,
   getAllReceipts,
   verifyAndFinalizeReceipt,
+  // OCR controller here
+  ocrReceipt,
 } from '../controllers/receipt.controller'
 
 const router = Router();
@@ -29,6 +31,11 @@ router.get('/:receiptId', getReceiptById);
 
 router.get('/', getAllReceipts);
 
+// add an OCR route here
+router.post('/:receiptId/ocr', ocrReceipt);
+
 router.put('/:receiptId/verify', verifyAndFinalizeReceipt);
+
+
 
 export default router;
