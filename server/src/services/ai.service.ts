@@ -22,7 +22,8 @@ const imageValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
 );
 
 const imageValidationHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Is this document a readable grocery receipt?
+  `Does this document appear to be a receipt with grocery items? 
+  If yes, respond with "TRUE". If not, respond with "FALSE".
   Document data: {image_data}`
 );
 
@@ -64,7 +65,7 @@ const receiptAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
   General rules:
   - If 'purchaseDate', 'totalAmount', or 'currency' are not explicitly visible, make a reasonable guess or set to null/empty string. Translate 'currency' to its English abbreviation (e.g., "EUR" for "Euro").
   - Output ONLY the JSON object. Do NOT include any other text or markdown formatting outside the JSON.`
-  );
+);
 const receiptAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
   `Analyze this grocery receipt document: {image_data}`
 );
@@ -90,14 +91,78 @@ export interface AIReceiptData {
     classification: string;
   }>;
 }
-
 export const aiService = {
   validateDocument: async (
     base64Image: string,
     mimeType: string
   ): Promise<boolean> => {
+    try {
+      const formattedValidationPrompt = await IMAGE_VALIDATION_PROMPT.formatMessages({
+        image_data: `data:${mimeType};base64,${base64Image}`,
+      });
+
+      console.log("✅ Prompt formatting succeeded.");
+
+      const validationResponse = await chatModel.invoke(formattedValidationPrompt);
+      console.log("🧠 Raw Gemini validation output:", validationResponse);
+
+      const content = validationResponse?.content;
+      const isValidReceiptText = typeof content === 'string'
+        ? content.trim().toUpperCase()
+        : '';
+
+      console.log("🧠 Gemini validation response:", isValidReceiptText);
+
+      return isValidReceiptText.includes('TRUE') || isValidReceiptText.includes('YES');
+    } catch (err) {
+      console.error("❌ Gemini validation error:", err);
+      throw new Error("Validation failed: prompt formatting or AI error");
+    }
+  },
+
+  analyzeReceipt: async (
+    base64Image: string,
+    mimeType: string
+  ): Promise<AIReceiptData> => {
+    try {
+      const formattedAnalysisPrompt = await RECEIPT_ANALYSIS_PROMPT.formatMessages({
+        image_data: `data:${mimeType};base64,${base64Image}`,
+      });
+
+      const aiResponse = await chatModel.invoke(formattedAnalysisPrompt);
+      const aiParsedDataText = aiResponse.content as string;
+
+      console.log("📦 Gemini analysis raw output:", aiParsedDataText);
+
+      const cleanJsonString = aiParsedDataText
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+
+      const parsedReceiptData: AIReceiptData = JSON.parse(cleanJsonString);
+
+      if (!parsedReceiptData.items || !Array.isArray(parsedReceiptData.items)) {
+        throw new Error('AI response did not contain a valid "items" array.');
+      }
+
+      return parsedReceiptData;
+    } catch (err) {
+      console.error("❌ Gemini analysis error:", err);
+      throw new Error("Failed to analyze receipt with Gemini.");
+    }
+  }
+};
+
+
+/*export const aiService = {
+  validateDocument: async (
+    base64Image: string,
+    mimeType: string
+  ): Promise<boolean> => {
     const formattedValidationPrompt = await IMAGE_VALIDATION_PROMPT.formatMessages({
-      image_data: {
+      image_data: `data:${mimeType};base64,${base64Image}`,
+
+      /*image_data: {
         type: 'image_url',
         mime_type: mimeType,
         url: `data:${mimeType};base64,${base64Image}`,
@@ -105,9 +170,19 @@ export const aiService = {
     });
 
     const validationResponse = await chatModel.invoke(formattedValidationPrompt);
-    const isValidReceiptText = (validationResponse.content as string).trim().toUpperCase();
+    //const isValidReceiptText = (validationResponse.content as string).trim().toUpperCase();
+    // Gemini responses are not always plain strings.
+    // This check ensures that we only call `.trim()` if `content` is actually a string.
+    // Prevents runtime errors like "trim is not a function" when the model returns an object or undefined.
+    const content = validationResponse?.content;
+    const isValidReceiptText = typeof content === 'string'
+      ? content.trim().toUpperCase()
+      : '';
 
-    return isValidReceiptText === 'TRUE';
+
+    return isValidReceiptText.includes('TRUE');
+
+    //return isValidReceiptText === 'TRUE';
   },
 
   analyzeReceipt: async (
@@ -115,8 +190,9 @@ export const aiService = {
     mimeType: string
   ): Promise<AIReceiptData> => {
     const formattedAnalysisPrompt = await RECEIPT_ANALYSIS_PROMPT.formatMessages({
+      image_data: `data:${mimeType};base64,${base64Image}`,
       // json_schema: EXPECTED_JSON_SCHEMA,
-      image_data: {
+      /*image_data: {
         type: 'image_url',
         mime_type: mimeType,
         url: `data:${mimeType};base64,${base64Image}`,
@@ -137,4 +213,4 @@ export const aiService = {
     }
     return parsedReceiptData;
   },
-};
+};*/

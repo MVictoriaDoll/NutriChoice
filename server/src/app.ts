@@ -20,10 +20,16 @@ app.use(express.urlencoded({extended: true}))
 app.use('/api', authenticateUser);
 app.use('/api', apiRoutes);
 
-app.use(express.static(config.frontendBuildPath));
-app.get('/*foo', (req, res) => {
+// The index.html is only useful for routes NOT starting with /api. Chatgpt tip
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(config.frontendBuildPath, 'index.html'));
 });
+
+
+/*app.use(express.static(config.frontendBuildPath));
+app.get('/*foo', (req, res) => {
+  res.sendFile(path.join(config.frontendBuildPath, 'index.html'));
+});*/
 
 app.use(errorHandler);
 

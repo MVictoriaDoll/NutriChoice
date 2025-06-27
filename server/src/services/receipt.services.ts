@@ -1,9 +1,11 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { AIReceiptData } from './ai.service';
 
+
+
 const prisma = new PrismaClient();
 
-interface ReceiptNutritionSummaryJson extends Record<string, unknown>{
+interface ReceiptNutritionSummaryJson extends Record<string, unknown> {
   calculatedScore: number;
   freshFoods: number;
   highSugarItems: number;
@@ -12,19 +14,19 @@ interface ReceiptNutritionSummaryJson extends Record<string, unknown>{
 }
 
 function isReceiptNutritionSummary(summary: unknown): summary is ReceiptNutritionSummaryJson {
-    if (typeof summary !== 'object' || summary === null) {
-        return false;
-    }
+  if (typeof summary !== 'object' || summary === null) {
+    return false;
+  }
 
-    const potentialSummary = summary as Record<string, unknown>; // Cast to a record to check properties safely
+  const potentialSummary = summary as Record<string, unknown>; // Cast to a record to check properties safely
 
-    return (
-        'calculatedScore' in potentialSummary && typeof potentialSummary.calculatedScore === 'number' &&
-        'freshFoods' in potentialSummary && typeof potentialSummary.freshFoods === 'number' &&
-        'highSugarItems' in potentialSummary && typeof potentialSummary.highSugarItems === 'number' &&
-        'processedFood' in potentialSummary && typeof potentialSummary.processedFood === 'number' &&
-        'goodNutriScore' in potentialSummary && typeof potentialSummary.goodNutriScore === 'number'
-    );
+  return (
+    'calculatedScore' in potentialSummary && typeof potentialSummary.calculatedScore === 'number' &&
+    'freshFoods' in potentialSummary && typeof potentialSummary.freshFoods === 'number' &&
+    'highSugarItems' in potentialSummary && typeof potentialSummary.highSugarItems === 'number' &&
+    'processedFood' in potentialSummary && typeof potentialSummary.processedFood === 'number' &&
+    'goodNutriScore' in potentialSummary && typeof potentialSummary.goodNutriScore === 'number'
+  );
 }
 
 export const receiptService = {
@@ -137,6 +139,7 @@ export const receiptService = {
     let totalGoodNutri = 0;
     let analyzedReceiptCount = 0;
 
+  
     allRelevantReceipts.forEach((receipt) => {
       if (receipt.nutritionSummary && isReceiptNutritionSummary(receipt.nutritionSummary)) {
         const summary = receipt.nutritionSummary;
