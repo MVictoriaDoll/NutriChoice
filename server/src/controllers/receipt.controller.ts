@@ -39,21 +39,40 @@ export const uploadReceipt: RequestHandler = async (req: Request, res: Response,
     }
     console.log (`Initial document validation passed for user ${userId}. Proceeding with detailed analysis.`);
 
-    // --- Step 2: Full Receipt Analysis with AI (Only if validation passed) ---
-    const parsedReceiptData = await aiService.analyzeReceipt(base64Image, mimeType);
-    console.log(`AI analysis complete for user ${userId}.`)
+    const rawText = await aiService.extractRawText(base64Image, mimeType);
+    console.log(`OCR step complete for user ${userId}.`);
 
-    // --- Step 3: Save the processed data to the database using a transaction ---
-    const newReceipt = await receiptService.createReceiptAndProcessData(
-      userId,
-      imageFile.originalname,
-      parsedReceiptData
-    );
+    // --- For now, we will return the raw text to test this step ---
+    // The next steps (structureText and createReceiptAndProcessData) are temporarily commented out.
+    res.status(200).json ({
+        message: 'Validation and OCR successful. Raw text extracted.',
+        data: {
+            rawText: rawText
+        }
+    });
 
-    res.status(201).json ({ message: 'Receipt uploaded and processed successfully.', receipt: newReceipt});
+    // // --- Step 2: Full Receipt Analysis with AI (Only if validation passed) ---
+    // const parsedReceiptData = await aiService.analyzeReceipt(base64Image, mimeType);
+    // console.log(`AI analysis complete for user ${userId}.`)
+
+    // // --- Step 3: Save the processed data to the database using a transaction ---
+    // const newReceipt = await receiptService.createReceiptAndProcessData(
+    //   userId,
+    //   imageFile.originalname,
+    //   parsedReceiptData
+    // );
+
+    // res.status(201).json ({ message: 'Receipt uploaded and processed successfully.', receipt: newReceipt});
 
   } catch (error) {
     console.error ('Error during AI processing or receipt upload: ', error);
+
+    if (error instanceof Error && error.message === 'AI_OCR_FAILED') {
+      res.status(422).json({
+        message: 'Could not extract text from the receipt. The image may be too blurry or unclear. Try again with a better image.'
+      });
+      return;
+    }
 
     next(error);
   }
