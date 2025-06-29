@@ -12,7 +12,8 @@
     "paths": {                     /* Optional: For absolute imports like '@/module' */
       "@/*": ["./src/*"]
     },
-    "typeRoots": ["./node_modules/@types", "./src/@types"]
+    "typeRoots": ["./node_modules/@types", "./src/@types"],
+     "types": ["node"]
   },
   "include": [
     "src/**/*.ts",    /* Include all TypeScript files in src and its subdirectories. */
