@@ -1,49 +1,65 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 import { useState, useEffect } from 'react';
-//import type { Item } from '../Types/verifypage';
+import type { Item } from '../Types/verifypage';
+import { useParams } from 'react-router-dom';
+
 import './VerifyPage.css';
 
 
+
 export default function VerifyPage() {
-  //const [items, setItems] = useState<Item[]>([]);
+ const { receiptId } = useParams();
+
+
+  console.log('VerifyPage mounted');
+ console.log('receiptId from useParams:', receiptId);
+
+
+  const [items, setItems] = useState<Item[]>([]);
+  const navigate = useNavigate();
 
   //const {receiptId} = useParams();
-  
-  // Initial state with mock items (simulating the uploaded receipt data)
-  const [items, setItems] = useState([
-    {
-      id: '1',
-      originalBillLabel: 'Chocapic',
-      aiSuggestedName: 'Cereal',
-      price: 4.5,
-      isFoodItem: true,
-      classification: 'High Sugar',
-    },
-    {
-      id: '2',
-      originalBillLabel: 'Pepsi Max',
-      aiSuggestedName: 'Soda',
-      price: 3.0,
-      isFoodItem: false,
-      classification: 'Processed',
 
+
+  // Navigate to the dashboard when user confirms the list
+  const handleConfirm = async () => {
+  if (!receiptId) return;
+
+  try {
+    const response = await fetch(`http://localhost:3000/api/receipts/${receiptId}/verify`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': '68613d982ab9f1d60d54d2b6',
+      },
+      body: JSON.stringify({
+        items,
+        nutritionSummary: {},  
+        aiFeedbackReceipt: "", 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error verifying receipt');
     }
-  ]);
 
-
-  const navigate = useNavigate();
-    // Navigate to the dashboard when user confirms the list
-  const handleConfirm = () =>   {
+    console.log(' Receipt verified');
     navigate('/dashboard');
+  } catch (error) {
+    console.error('Error verifying receipt:', error);
+    alert('There was an error verifying your receipt');
   }
+};
+
   
-/*useEffect (() => {
+useEffect (() => {
   if(!receiptId) return;
+  console.log('🔍 Starting fetch for receiptId:', receiptId);
   const fetchReceiptItems = async () => {
     try {
-      const response = await fetch (`http://localhost:3000/receipts/${receiptId}`, {
+      const response = await fetch (`http://localhost:3000/api/receipts/${receiptId}`, {
         headers: {
-          'X-User-Id': 'test-user-123',
+          'X-User-Id': '68613d982ab9f1d60d54d2b6',
 
         },
       });
@@ -61,7 +77,7 @@ export default function VerifyPage() {
     }
   };
   fetchReceiptItems();
-}, [receiptId]);*/
+}, [receiptId]);
 
 
 

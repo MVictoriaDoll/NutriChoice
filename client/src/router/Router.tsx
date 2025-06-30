@@ -13,7 +13,7 @@ export default function Router () {
       <Route path="/upload" element={<UploadPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/feedback" element={<Feedback />} />
-      <Route path="/verify" element={<VerifyPage />} />
+      <Route path="/verify/:receiptId" element={<VerifyPage />} />
        {/* any other route will be redirected to landing page */}
       <Route path="*" element={<FirstLandingPage />} />
       </Routes>
