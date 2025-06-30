@@ -17,13 +17,14 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 
+app.use('/api/receipts', apiRoutes);
 app.use('/api', authenticateUser);
 app.use('/api', apiRoutes);
 
-app.use(express.static(config.frontendBuildPath));
-app.get('/*foo', (req, res) => {
-  res.sendFile(path.join(config.frontendBuildPath, 'index.html'));
-});
+//app.use(express.static(config.frontendBuildPath));
+//app.get('/*foo', (req, res) => {
+  //res.sendFile(path.join(config.frontendBuildPath, 'index.html'));
+//});
 
 app.use(errorHandler);
 

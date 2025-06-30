@@ -16,7 +16,7 @@ const chatModel = new ChatGoogleGenerativeAI({
 
 // --- PROMPT: For initial image validation ---
 const imageValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
-  `You are a strict image classifier. Your sole purpose is to determine if an uploaded document (image or PDF) is a clearly readable grocery receipt.
+  `You are a strict image classifier. Your sole purpose is to determine if an uploaded document (image or PDF) is a clearly readable grocery receipt for human.
   Respond with "TRUE" if it is a readable grocery receipt.
   Respond with "FALSE" if it is not a readable grocery receipt (e.g., blurry, too dark, a picture of something else, a document that is not a receipt).
   Output ONLY "TRUE" or "FALSE". Do NOT include any other text or markdown.`
@@ -123,7 +123,10 @@ export const aiService = {
     });
 
     const validationResponse = await chatModel.invoke(formattedValidationPrompt);
-    const isValidReceiptText = (validationResponse.content as string).trim().toUpperCase();
+    //const isValidReceiptText = (validationResponse.content as string).trim().toUpperCase();
+    const content = validationResponse.content as string;
+
+    const isValidReceiptText = content.trim().toUpperCase();
 
     return isValidReceiptText === 'TRUE';
   },
@@ -136,7 +139,7 @@ export const aiService = {
       image_data: {
         type: 'image_url',
         mime_type: mimeType,
-        url:`data${mimeType};base64,${base64Image}`,
+        url:`data:${mimeType};base64,${base64Image}`,
       },
     });
 

@@ -1,22 +1,31 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { aiService } from '../services/ai.service';
 import { receiptService } from '../services/receipt.services';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
 
 // Upload receipt page and AI to database
-export const uploadReceipt: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const uploadReceipt = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  console.log('uploadReceipt hit!');
+
   const userId = req.userId;
   const imageFile = req.file;
 
   if (!userId) {
     console.error('Error in uploadReceipt: userId is missing after authentication middleware.');
     // 401 unauthorized
-    res.status(401).json({message: 'Unauthenticated user.'});
+    res.status(401).json({ message: 'Unauthenticated user.' });
     return;
   }
 
   if (!imageFile) {
     // 400 Bad Request
-    res.status(400).json({message: 'No image file uploaded.'});
+    res.status(400).json({ message: 'No image file uploaded.' });
     return;
   }
 
@@ -37,19 +46,37 @@ export const uploadReceipt: RequestHandler = async (req: Request, res: Response,
       });
       return;
     }
-    console.log (`Initial document validation passed for user ${userId}. Proceeding with detailed analysis.`);
+    console.log(`Initial document validation passed for user ${userId}. Proceeding with detailed analysis.`);
 
     const rawText = await aiService.extractRawText(base64Image, mimeType);
-    console.log(`OCR step complete for user ${userId}.`);
+    console.log(`OCR step complete  for user ${userId}.`);
+    const receipt = await prisma.receipt.findFirst({
+      where: { userId },
+      orderBy: { purchaseDate: 'desc' },
+    });
 
     // --- For now, we will return the raw text to test this step ---
     // The next steps (structureText and createReceiptAndProcessData) are temporarily commented out.
-    res.status(200).json ({
-        message: 'Validation and OCR successful. Raw text extracted.',
-        data: {
-            rawText: rawText
-        }
-    });
+    /* res.status(200).json({
+       message: 'Validation and OCR successful. Raw text extracted.',
+       data: {
+         rawText: rawText
+       }
+     });*/
+
+
+    if (!receipt) {
+      res.status(404).json({ message: 'No seed receipt found for this user.' });
+      return
+    }
+
+    res.status(201).json({
+  message: 'Receipt retrieved from seed.',
+  receiptId: receipt.id,
+});
+return;
+
+
 
     // // --- Step 2: Full Receipt Analysis with AI (Only if validation passed) ---
     // const parsedReceiptData = await aiService.analyzeReceipt(base64Image, mimeType);
@@ -64,8 +91,9 @@ export const uploadReceipt: RequestHandler = async (req: Request, res: Response,
 
     // res.status(201).json ({ message: 'Receipt uploaded and processed successfully.', receipt: newReceipt});
 
+
   } catch (error) {
-    console.error ('Error during AI processing or receipt upload: ', error);
+    console.error('Error during AI processing or receipt upload: ', error);
 
     if (error instanceof Error && error.message === 'AI_OCR_FAILED') {
       res.status(422).json({
@@ -79,13 +107,13 @@ export const uploadReceipt: RequestHandler = async (req: Request, res: Response,
 };
 
 // Verify document page User interaction
-export const getReceiptById: RequestHandler = async ( req: Request, res: Response, next: NextFunction) => {
+export const getReceiptById: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const { receiptId } = req.params;
   const userId = req.userId;
 
   if (!userId) {
     console.error(' Error in getAllReceipts: userId is missing.');
-    res.status(401).json({ message: 'Unauthenticated user.'});
+    res.status(401).json({ message: 'Unauthenticated user.' });
     return;
   }
 
@@ -95,7 +123,7 @@ export const getReceiptById: RequestHandler = async ( req: Request, res: Respons
       res.json(receipt);
     } else {
       console.warn(`Receipt not found or unauthorized for ID: ${receiptId} by user: ${userId}`);
-      res.status(404).json({message: 'Receipt not found or unauthorized access.'})
+      res.status(404).json({ message: 'Receipt not found or unauthorized access.' })
     }
   } catch (error) {
     console.error('Error fetching single receipt: ', error);
@@ -107,9 +135,9 @@ export const getReceiptById: RequestHandler = async ( req: Request, res: Respons
 export const getAllReceipts: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
 
-  if(!userId) {
+  if (!userId) {
     console.error('Error in getAllReceipts: userId is missing.');
-    res.status(401).json({ message: 'Unauthenticated user.'});
+    res.status(401).json({ message: 'Unauthenticated user.' });
     return;
   }
 
@@ -124,13 +152,13 @@ export const getAllReceipts: RequestHandler = async (req: Request, res: Response
 
 // upadate the summary and reaggregate the user's overall summary after user verification/correction.
 export const verifyAndFinalizeReceipt: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-  const {receiptId} = req.params;
+  const { receiptId } = req.params;
   const userId = req.userId;
-  const {nutritionSummary, aiFeedbackReceipt, items: updatedItemsData} = req.body;
+  const { nutritionSummary, aiFeedbackReceipt, items: updatedItemsData } = req.body;
 
   if (!userId) {
     console.error('Error in verifyAndFinalizeReceipt: userId is missing.');
-    res.status(401).json({ message: 'Unauthenticated user.'});
+    res.status(401).json({ message: 'Unauthenticated user.' });
     return;
   }
 
@@ -142,8 +170,8 @@ export const verifyAndFinalizeReceipt: RequestHandler = async (req: Request, res
       { nutritionSummary, aiFeedbackReceipt, items: updatedItemsData }
     );
 
-    res.json({ message: 'Receipt verified and finalized.', receipt: updatedReceipt})
-  } catch (error){
+    res.json({ message: 'Receipt verified and finalized.', receipt: updatedReceipt })
+  } catch (error) {
     console.error('Error verifying and finalizing receipt: ', error);
     next(error);
   }
