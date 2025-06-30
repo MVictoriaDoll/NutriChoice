@@ -36,6 +36,34 @@ export const receiptService = {
   ) => {
     // Prisma transaction - atomicity
     const newReceipt = await prisma.$transaction(async (prismaTx: Prisma.TransactionClient) => {
+      const nutritionSummary : ReceiptNutritionSummaryJson = {
+        calculatedScore: 0,
+        freshFoods: 0,
+        highSugarItems: 0,
+        processedFood: 0,
+        goodNutriScore: 0,
+      };
+
+      const foodItemCount = parsedReceiptData.items.filter(item => item.isFoodItem).length;
+      if (foodItemCount > 0) {
+        let freshCount = 0, sugarCount = 0, processedCount = 0, goodScoreCount = 0;
+        parsedReceiptData.items.forEach(item => {
+          if(item.isFoodItem) {
+            switch (item.classification) {
+              case 'Fresh Food': freshCount++; break;
+              case 'High Sugar': sugarCount++; break;
+              case 'Processed': processedCount++; break;
+              case 'Good Nutri-Score': goodScoreCount++; break
+            }
+          }
+        });
+        nutritionSummary.freshFoods = (freshCount / foodItemCount) * 100;
+        nutritionSummary.highSugarItems = (sugarCount / foodItemCount) * 100;
+        nutritionSummary.processedFood = (processedCount / foodItemCount) * 100;
+        nutritionSummary.goodNutriScore = (goodScoreCount / foodItemCount) * 100;
+
+        nutritionSummary.calculatedScore = (nutritionSummary.freshFoods + nutritionSummary.goodNutriScore) - (nutritionSummary.processedFood - nutritionSummary.highSugarItems);
+      }
       const receipt = await prismaTx.receipt.create({
         data: {
           purchaseDate: parsedReceiptData.purchaseDate
@@ -47,14 +75,7 @@ export const receiptService = {
           currency: parsedReceiptData.currency || 'EUR',
           status: 'processed', // status after AI processing
           userId: userId,
-          // Basic summary (AI Generated)
-          nutritionSummary: JSON.parse(JSON.stringify({
-            calculatedScore: 0,
-            freshFoods: 0,
-            highSugarItems: 0,
-            processedFood: 0,
-            goodNutriScore: 0,
-          })),
+          nutritionSummary: nutritionSummary as Prisma.JsonObject,
           aiFeedbackReceipt: 'Initial AI analysis complete. Verify items',
         },
       });
@@ -68,7 +89,7 @@ export const receiptService = {
           nutritionDetails: item.isFoodItem ? JSON.parse(JSON.stringify(item.nutritionDetails || {})) : JSON.parse(JSON.stringify({})),
           classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
           manualCorrection: false,
-          receiptId: newReceipt.id,
+          receiptId: receipt.id,
         }));
         await prismaTx.item.createMany({ data: itemsToCreate });
       }

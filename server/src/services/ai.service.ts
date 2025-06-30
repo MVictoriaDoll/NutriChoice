@@ -6,7 +6,7 @@ import {
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from '@langchain/core/prompts';
-import { SystemMessage } from '@langchain/core/messages';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
 
 const chatModel = new ChatGoogleGenerativeAI({
   model: config.geminiModelName,
@@ -15,83 +15,92 @@ const chatModel = new ChatGoogleGenerativeAI({
 });
 
 // --- PROMPT: For initial image validation ---
-const imageValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
-  `You are a strict image classifier. Your sole purpose is to determine if an uploaded document (image or PDF) is a clearly readable grocery receipt.
-  Respond with "TRUE" if it is a readable grocery receipt.
-  Respond with "FALSE" if it is not a readable grocery receipt (e.g., blurry, too dark, a picture of something else, a document that is not a receipt).
-  Output ONLY "TRUE" or "FALSE". Do NOT include any other text or markdown.`
+const textValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+  `You are a strict text classifier. Your sole purpose is to determine if the following text, extracted from a PDF, is from a grocery receipt.
+  Respond with "TRUE" if it is from a grocery receipt.
+  Respond with "FALSE" if it is not.
+  Output ONLY "TRUE" or "FALSE".`
 );
 
-const imageValidationHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Is this document a readable grocery receipt?
-  Document data: {image_data}`
+const textValidationHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+ 'Does the following text appear to be from a grocery receipt?\n\nText: "{raw_text}"'
 );
 
-const IMAGE_VALIDATION_PROMPT = ChatPromptTemplate.fromMessages([
-  imageValidationSystemPrompt,
-  imageValidationHumanPrompt
+const TEXT_VALIDATION_PROMPT = ChatPromptTemplate.fromMessages([
+  textValidationSystemPrompt,
+  textValidationHumanPrompt
 ]);
 
-const receiptTextExtractionSystemPrompt = new SystemMessage(
-  `You are an expert Pdf to text converter. Your sole purpose is to extract every piece of text from the provided document.
-  - Do not add any commentary, explanations, or formatting like markdown.
-  - If the document is in another language, do not translate it. Return the text in its original language.`
+const metadataExtractionSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+ `From the provided text, extract only the purchaseDate, totalAmount, and currency. Format it on separate lines like the example.`
 );
-const receiptTextExtractionHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Analyze this grocery receipt document: {image_data}`
-);
+const metadataExtractionHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+  `INSTRUCTIONS:
+- purchaseDate: Find the exact date of purchase (next to "Datum"/"Date").
+- totalAmount: Find the total bill amount (next to "Summe"/"Total").
+- currency: Find the currency (e.g., "EUR").
 
-const OCR_PROMPT = ChatPromptTemplate.fromMessages([
-  receiptTextExtractionSystemPrompt,
-  receiptTextExtractionHumanPrompt
-])
+EXAMPLE:
+purchaseDate: 2025-02-08
+totalAmount: 60.70
+currency: EUR
 
-/*
-const receiptAnalysisSystemMessage = new SystemMessage(
-  `You are an expert grocery receipt analyst. Your task is to accurately extract structured information from a grocery receipt document (image or PDF).
-  **Important:** The receipt might be in German. Translate all extracted textual values (except 'originalBillLabel') into English.
-  Return the data as a single JSON object.
-  Mandatory extraction rules:
-  1. 'originalRawText': Extract the complete and exact raw text from the entire receipt document. Translate this raw text into English.
-  2. For each item in the 'items' array:
-    a. 'originalBillLabel': This MUST be the precise grocery item name as it appears on the receipt (keep original language, e.g., "Milch" for milk).
-    b. 'aiSuggestedName': This should be your intelligent prediction and standardization of the 'originalBillLabel', translated into English. For example, if 'originalBillLabel' is "LAYS CHIPS", 'aiSuggestedName' should be "Potato Chips". If 'originalBillLabel' is "ORGANIC APPLES", 'aiSuggestedName' should be "Apples". If 'originalBillLabel' is "Milch", 'aiSuggestedName' should be "Milk".
-    c. 'price': Extract the exact price for each individual item as listed on the receipt.
-    d. 'isFoodItem': Determine if the item is a food item (true) or not (false). This MUST be strictly boolean.
-    e. 'nutritionDetails' and 'classification': These fields should ONLY be populated if 'isFoodItem' is true. If 'isFoodItem' is false, set 'nutritionDetails' to an empty object ({}) and 'classification' to "Other".
-    f. For 'classification' (if isFoodItem is true), categorize each item as "Fresh Food", "Processed", "High Sugar", "Good Nutri-Score", or "Other" based on common understanding.
-  General rules:
-  - If 'purchaseDate', 'totalAmount', or 'currency' are not explicitly visible, make a reasonable guess or set to null/empty string. Translate 'currency' to its English abbreviation (e.g., "EUR" for "Euro").
-  Here is the exact JSON schema you must follow:
-  \`\`\`json
-  {
-    "purchaseDate": "YYYY-MM-DD",
-    "totalAmount": "number",
-    "currency": "string",
-    "originalRawText": "string",
-    "items": [
-      {
-        "originalBillLabel": "string",
-        "aiSuggestedName": "string",
-        "price": "number",
-        "isFoodItem": "boolean",
-        "nutritionDetails": {},
-        "classification": "string"
-      }
-    ]
-  }
-  \`\`\`
-  - Output ONLY the JSON object. Do NOT include any other text or markdown formatting outside the JSON.`
-  );
-const receiptAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Analyze this grocery receipt document: {image_data}`
+TEXT TO ANALYZE:
+"{raw_text}"`
 );
 
-const RECEIPT_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
-  receiptAnalysisSystemMessage,
-  receiptAnalysisHumanPrompt,
+const METADATA_EXTRACTION_PROMPT = ChatPromptTemplate.fromMessages([
+  metadataExtractionSystemPrompt,
+  metadataExtractionHumanPrompt
 ]);
-*/
+
+const itemListExtractionSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+  `From the provided text, extract only the lines that represent purchased items. Do not include sums, taxes, discounts, or any other information.`
+);
+
+const itemListExtractionHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+  `Please list all the individual item lines from this text, one per line:\n\n"{raw_text}"`
+);
+
+const ITEM_LIST_EXTRACTION_PROMPT = ChatPromptTemplate.fromMessages([
+  itemListExtractionSystemPrompt,
+  itemListExtractionHumanPrompt
+]);
+
+const BulkItemAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+  `You are an expert grocery receipt analyst. Your task is to analyze a list of item lines and provide details for each one. The text may be in German; translate relevant values into English.
+  IMPORTANT: Do NOT return JSON. Return a list where each item is on a new line, with details separated by a pipe character (|) in the specified order.`
+);
+
+const BulkItemAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+  `For each item line in the list provided below, extract the following details in this exact order, separated by a pipe (|):
+  originalBillLabel|aiSuggestedName|price|isFoodItem|classification|nutritionDetails
+
+  TASK DETAILS FOR EACH ITEM:
+  - originalBillLabel: The exact product name from the line.
+  - aiSuggestedName: A clean, recognizable English name for the product.
+  - price: The final numeric price for the line item.
+  - isFoodItem: A boolean ('true' or 'false').
+  - classification: If not a food item, must be 'Other'. Otherwise, categorize as "Fresh Food", "Processed", "High Sugar", etc.
+  - nutritionDetails: If not a food item, must be "EMPTY". Otherwise, provide a comma-separated list of 5-6 key nutritional benefits.
+
+  EXAMPLE:
+  Input List:
+  K.Eier 1,99 B
+  Cunchips Cheese 0,99 B
+
+  Expected Output:
+  K.Eier|Eggs|1.99|true|Fresh Food|Complete Protein,Supports Good Cholesterol,Heart Health
+  Cunchips Cheese|Cheese Chips|0.99|true|Processed|EMPTY
+
+  ITEM LIST TO ANALYZE:
+  "{item_list}"`
+);
+
+const BULK_ITEM_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
+  BulkItemAnalysisSystemPrompt,
+  BulkItemAnalysisHumanPrompt
+]);
 
 
 export interface AIReceiptData {
@@ -110,80 +119,124 @@ export interface AIReceiptData {
 }
 
 export const aiService = {
-  validateDocument: async (
-    base64Image: string,
-    mimeType: string
-  ): Promise<boolean> => {
-    const formattedValidationPrompt = await IMAGE_VALIDATION_PROMPT.formatMessages({
-      image_data: {
-        type: 'image_url',
-        mime_type: mimeType,
-        url: `data:${mimeType};base64,${base64Image}`,
-      },
-    });
+    processReceipt: async (filePath: string): Promise<AIReceiptData> => {
+    console.log('[AI_SERVICE] Starting receipt processing chain...');
 
-    const validationResponse = await chatModel.invoke(formattedValidationPrompt);
-    const isValidReceiptText = (validationResponse.content as string).trim().toUpperCase();
+    const rawText = await aiService.extractTextFromPdf(filePath);
+    const isValid = await aiService.validateReceiptText(rawText);
+    if (!isValid) {
+      throw new Error('AI_VALIDATION_FAILED');
+    }
+    const structuredData = await aiService.analyzeReceiptInChunks(rawText);
 
-    return isValidReceiptText === 'TRUE';
+    console.log('[AI_SERVICE] Receipt processing chain finished successfully.');
+    return structuredData;
   },
 
-  extractRawText: async (
-    base64Image: string,
-    mimeType: string
-  ): Promise<string> => {
-    const formattedExtractionPrompt = await OCR_PROMPT.formatMessages({
-      image_data: {
-        type: 'image_url',
-        mime_type: mimeType,
-        url:`data${mimeType};base64,${base64Image}`,
-      },
-    });
+  extractTextFromPdf: async (filePath: string): Promise<string> => {
+    console.log('Step 1: Extracting text from PDF file...');
+    const loader = new PDFLoader(filePath);
+    const docs = await loader.load();
+    const rawText = docs.map(doc => doc.pageContent).join('\n\n');
+    if (!rawText || rawText.trim() === '') throw new Error('PDF_PARSING_FAILED');
 
-    const response = await chatModel.invoke(formattedExtractionPrompt);
-    const rawText = (response.content as string);
-
-    if(!rawText || rawText.trim() === ''){
-      throw new Error('AI_OCR_FAILED');
-    }
+    console.log('Step 1 successful.');
     return rawText.trim();
   },
 
-  // analyzeReceipt: async (
-  //   base64Image: string,
-  //   mimeType: string
-  // ): Promise<AIReceiptData> => {
-  //   const formattedAnalysisPrompt = await RECEIPT_ANALYSIS_PROMPT.formatMessages({
-  //     // json_schema: EXPECTED_JSON_SCHEMA,
-  //     image_data: {
-  //       type: 'image_url',
-  //       mime_type: mimeType,
-  //       url: `data:${mimeType};base64,${base64Image}`,
-  //     },
-  //   });
+  validateReceiptText: async (rawText: string): Promise<boolean> => {
+    console.log('Step 2: Validating extracted text...');
+    const validationChain = TEXT_VALIDATION_PROMPT.pipe(chatModel);
+    const response = await validationChain.invoke({ raw_text: rawText });
+    const isValidText = (response.content as string).trim().toUpperCase();
 
-  //   const aiResponse = await chatModel.invoke(formattedAnalysisPrompt);
-  //   const aiContent = aiResponse.content;
-  //   let jsonString: string;
+    if (isValidText !== 'TRUE') {
+        console.warn(`Text validation failed. AI response: ${isValidText}`);
+        return false;
+    }
+    console.log('Step 2 successful.');
+    return true;
+  },
 
-  //   if(typeof aiContent === 'string') {
-  //     jsonString = aiContent;
-  //   } else if (Array.isArray(aiContent) && aiContent.length > 0 && 'text' in aiContent[0]) {
-  //     //for case where content is structured block like [{ type: 'text', text:'...' }]
-  //     jsonString = (aiContent[0] as { text: string}).text;
-  //   } else {
-  //     throw new Error(`Unexpected AI response format. Expected string or content array. Received: ${JSON.stringify(aiContent)}`)
-  //   }
+  analyzeReceiptInChunks: async (rawText: string): Promise<AIReceiptData> => {
+    console.log('Step 3: Analyzing receipt in chunks...');
+    const result: AIReceiptData = {
+        purchaseDate: null, totalAmount: null, currency: null,
+        originalRawText: rawText, items: [],
+    };
 
-  //   const cleanJsonString = (jsonString)
-  //     .replace(/```json/g, '')
-  //     .replace(/```/g, '')
-  //     .trim();
+    const metadataChain = METADATA_EXTRACTION_PROMPT.pipe(chatModel);
+    const metadataPromise = metadataChain.invoke({ raw_text: rawText });
 
-  //   const parsedReceiptData: AIReceiptData = JSON.parse(cleanJsonString);
-  //   if (!parsedReceiptData.items || !Array.isArray(parsedReceiptData.items)) {
-  //     throw new Error('AI response did not contain a valid "items" array.');
-  //   }
-  //   return parsedReceiptData;
-  // },
+    const itemListChain = ITEM_LIST_EXTRACTION_PROMPT.pipe(chatModel);
+    const itemListPromise = itemListChain.invoke({raw_text: rawText});
+
+    const [metadataResponse, itemListResponse] = await Promise.all([metadataPromise, itemListPromise]);
+
+    (metadataResponse.content as string).split('\n').forEach(line => {
+      if (line.toLowerCase().startsWith('purchasedate:')) result.purchaseDate = line.substring(line.indexOf(':') + 1).trim();
+        else if (line.toLowerCase().startsWith('totalamount:')) result.totalAmount = parseFloat(line.substring(line.indexOf(':') + 1).trim());
+        else if (line.toLowerCase().startsWith('currency:')) result.currency = line.substring(line.indexOf(':') + 1).trim();
+    });
+
+    const itemListContent = itemListResponse.content;
+    let itemLinesAsString: string;
+
+    if (typeof itemListContent === 'string') {
+        itemLinesAsString = itemListContent;
+    } else if (Array.isArray(itemListContent) && itemListContent.length > 0 && typeof itemListContent[0] === 'object' && 'text' in itemListContent[0]) {
+        itemLinesAsString = (itemListContent[0] as { text: string }).text;
+    } else {
+        itemLinesAsString = ''; // Default to an empty string if the format is unexpected or empty
+    }
+
+    if (!itemLinesAsString || itemLinesAsString.trim() === '') {
+        console.warn('[DEBUG] No items found by AI to analyze.');
+        return result;
+    }
+
+    const bulkAnalysisChain = BULK_ITEM_ANALYSIS_PROMPT.pipe(chatModel);
+    const bulkAnalysisResponse = await bulkAnalysisChain.invoke({ item_list: itemLinesAsString });
+
+    const bulkAnalysisContent = bulkAnalysisResponse.content;
+    let analyzedItemLinesAsString: string;
+
+    if (typeof bulkAnalysisContent === 'string') {
+        analyzedItemLinesAsString = bulkAnalysisContent;
+    } else if (Array.isArray(bulkAnalysisContent) && bulkAnalysisContent.length > 0 && typeof bulkAnalysisContent[0] === 'object' && 'text' in bulkAnalysisContent[0]) {
+        analyzedItemLinesAsString = (bulkAnalysisContent[0] as { text: string }).text;
+    } else {
+        console.warn('[DEBUG] Bulk analysis returned unexpected format, cannot process items:', bulkAnalysisContent);
+        analyzedItemLinesAsString = ''; // Default to empty string to prevent crash
+    }
+
+    const analyzedItemLines = (analyzedItemLinesAsString).split('\n').filter(line => line.trim() !== '');
+
+    // Parse the final, detailed item lines
+    for (const line of analyzedItemLines) {
+        const parts = line.split('|');
+        if (parts.length === 6) {
+            const price = parseFloat(parts[2]?.trim());
+            const nutritionString = parts[5]?.trim();
+            let nutritionData: Record<string, unknown> = {};
+            if (nutritionString && nutritionString.toUpperCase() !== 'EMPTY') {
+                nutritionData = { benefits: nutritionString.split(',').map(benefit => benefit.trim()) };
+            }
+            result.items.push({
+                originalBillLabel: parts[0]?.trim(),
+                aiSuggestedName: parts[1]?.trim(),
+                price: isNaN(price) ? 0 : price,
+                isFoodItem: parts[3]?.trim().toLowerCase() === 'true',
+                classification: parts[4]?.trim(),
+                nutritionDetails: nutritionData,
+            });
+        } else {
+            console.warn(`Skipping malformed item detail line: ${line}`);
+        }
+    }
+
+    console.log('Step 3 successful: Data parsed and structured in code.');
+    return result;
+
+  },
 };
