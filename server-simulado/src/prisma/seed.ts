@@ -2,7 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import { ObjectId } from 'bson';
 
 const prisma = new PrismaClient();
-const testUserId = new ObjectId().toHexString();
+//const testUserId = new ObjectId().toHexString();
+const testUserId = '686296df94032097daa8f25f'; // o cualquier ObjectId que vos elijas
+
 
 async function main() {
   // 1. Create or update the test user
@@ -16,6 +18,8 @@ async function main() {
       preferences: {},
     },
   });
+
+console.log('✅ Usuario de seed creado con ID:', user.id);
 
   // 2. Create a receipt based on the real factura.pdf
   const receipt = await prisma.receipt.create({
@@ -60,6 +64,20 @@ async function main() {
   });
 
   console.log('Seed created successfully with real factura data.');
+
+  await prisma.userNutritionSummary.upsert({
+  where: { userId: user.id },
+  update: {},
+  create: {
+    userId: user.id,
+    nutritionScore: 65,
+    freshFoodsPercentage: 30,
+    highSugarItemsPercentage: 20,
+    processedFoodPercentage: 30,
+    goodNutriScorePercentage: 20,
+    overallAiFeedback: 'Try reducing sugar and processed snacks while keeping up the good protein and legume choices.',
+  },
+});
 
   // 4. feedback section
   await prisma.groceryList.upsert({

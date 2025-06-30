@@ -110,4 +110,53 @@ export const verifyAndFinalizeReceipt: RequestHandler = async (
     console.error('Error finalizing receipt:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
+
+  
 };
+export const getAnalysisSummary = async (req: Request, res: Response) => {
+  const userId = req.header('X-User-Id');
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Missing user ID' });
+  }
+
+  try {
+    const summary = await prisma.userNutritionSummary.findUnique({
+      where: { userId },
+    });
+
+    if (!summary) {
+      return res.status(404).json({ message: 'No nutrition summary found' });
+    }
+
+    res.json(summary);
+  } catch (error) {
+    console.error('getAnalysisSummary error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+export const getFeedback = async (req: Request, res: Response) => {
+  const userId = req.header('X-User-Id');
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Missing user ID' });
+  }
+
+  try {
+    const groceryList = await prisma.groceryList.findUnique({
+      where: { userId },
+    });
+
+    if (!groceryList) {
+      return res.status(404).json({ message: 'No grocery list found' });
+    }
+
+    res.json(groceryList);
+  } catch (error) {
+    console.error('getFeedback error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
