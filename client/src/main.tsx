@@ -11,7 +11,7 @@ const audience = import.meta.env.VITE_AUTH0_AUDIENCE!
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>       {/* ← 只在这里包一次 */}
+    <BrowserRouter>
       <Auth0Provider
         domain={domain}
         clientId={clientId}
