@@ -1,5 +1,5 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 //import type { Item } from '../Types/verifypage';
 import './VerifyPage.css';
 
@@ -8,7 +8,7 @@ export default function VerifyPage() {
   //const [items, setItems] = useState<Item[]>([]);
 
   //const {receiptId} = useParams();
-  
+
   // Initial state with mock items (simulating the uploaded receipt data)
   const [items, setItems] = useState([
     {
@@ -36,7 +36,7 @@ export default function VerifyPage() {
   const handleConfirm = () =>   {
     navigate('/dashboard');
   }
-  
+
 /*useEffect (() => {
   if(!receiptId) return;
   const fetchReceiptItems = async () => {
@@ -96,7 +96,7 @@ export default function VerifyPage() {
             <p className='verify-label'>Original label: {item.originalBillLabel}</p>
               {/* Editable input for AI-suggested name */}
             <p className='verify-suggestion'>
-              AI suggestion: 
+              AI suggestion:
              <input className='verify-input' type="text" value={item.aiSuggestedName} onChange={(e)=> handleAiSuggestedName(item.id, e.target.value)} />
              </p>
               {/* Price as shown on the receipt (not editable) */}

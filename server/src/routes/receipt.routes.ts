@@ -1,5 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
+import { checkJwt } from "../middleware/auth0";
+
 import {
   uploadReceipt,
   getReceiptById,
@@ -8,6 +10,8 @@ import {
 } from '../controllers/receipt.controller'
 
 const router = Router();
+
+router.use(checkJwt);
 
 const upload = multer({
   storage: multer.memoryStorage(),
