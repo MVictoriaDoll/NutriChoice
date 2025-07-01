@@ -1,24 +1,27 @@
+// src/main.tsx
 import React from 'react'
-import ReactDOM from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
+import App from './App'
 import { BrowserRouter } from 'react-router-dom'
 import { Auth0Provider } from '@auth0/auth0-react'
-import App from './App'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const domain   = import.meta.env.VITE_AUTH0_DOMAIN!
+const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID!
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE!
+
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Auth0Provider
-      domain={import.meta.env.VITE_AUTH0_DOMAIN}
-      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
-      authorizationParams={{
-        redirect_uri: import.meta.env.VITE_AUTH0_REDIRECT_URI,
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-      }}
-    >
-      <BrowserRouter>
+    <BrowserRouter>       {/* ← 只在这里包一次 */}
+      <Auth0Provider
+        domain={domain}
+        clientId={clientId}
+        authorizationParams={{
+          redirect_uri: window.location.origin,
+          audience,
+        }}
+      >
         <App />
-      </BrowserRouter>
-    </Auth0Provider>
+      </Auth0Provider>
+    </BrowserRouter>
   </React.StrictMode>
 )
-
-
