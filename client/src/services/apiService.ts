@@ -14,7 +14,7 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('user_token');
 
     if (token) {
-      config.headers.Authorization = `Bearer $(token)`;
+      config.headers.Authorization = `Bearer ${token}`;
     } else {
       let anonymousId = localStorage.getItem('anonymous_user_id');
 

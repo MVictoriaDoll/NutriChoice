@@ -18,18 +18,24 @@ const connectToDatabase = async () => {
 
 
 // --- Start the Server ---
-const startServer = async() => {
+const startServer = async () => {
   await connectToDatabase();
 
-  const server = app.listen(config.port, () => {
+  /*const server = app.listen(config.port, () => {
     console.log (`🛰 Server running on http://localhost:${config.port} in ${config.nodeEnv} mode`);
     console.log (`Serving frontend from: ${config.frontendBuildPath}`);
-  })
+  })*/
+ const server = app.listen(Number(config.port), '0.0.0.0', () => {
+  console.log(`🛰 Server running on http://localhost:${config.port} in ${config.nodeEnv} mode`);
+  console.log(`Serving frontend from: ${config.frontendBuildPath}`);
+});
+
+
 
   // --- Shutdown the Server ---
   process.on('SIGTERM', async () => {
     console.log('👋 SIGTERM signal received: Closing HTTP server ...');
-    server.close( async () => {
+    server.close(async () => {
       console.log('HTTP server closed.');
       await prisma.$disconnect();
       console.log('Prisma disconnected.');

@@ -9,6 +9,13 @@ import {
 
 const router = Router();
 
+router.get('/ping', (req, res) => {
+  console.log('✅ GET /api/receipts/ping reached');
+  res.send('pong');
+});
+
+
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits:{
@@ -23,7 +30,27 @@ const upload = multer({
   }
 });
 
-router.post('/upload', upload.single('receiptFile'), uploadReceipt);
+//router.post('/upload', upload.single('receiptFile'), uploadReceipt);
+
+router.post(
+  '/upload',
+  (req, res, next) => {
+    console.log('📥 [PRE-MULTER] Request received!');
+    next();
+  },
+  upload.single('receiptFile'),
+  (req, res, next) => {
+    console.log('📤 [POST-MULTER] File passed Multer.');
+    if (!req.file) {
+      console.warn('⚠️ No file received by Multer.');
+    } else {
+      console.log(`✅ File received: ${req.file.originalname}, mimetype: ${req.file.mimetype}`);
+    }
+    next();
+  },
+  uploadReceipt
+);
+
 
 router.get('/:receiptId', getReceiptById);
 

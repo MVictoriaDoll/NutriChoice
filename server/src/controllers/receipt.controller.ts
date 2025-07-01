@@ -6,6 +6,7 @@ import path from 'path';
 
 // Upload receipt page and AI to database
 export const uploadReceipt: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+  console.log("uploadReceipt handler triggered");
   const userId = req.userId;
   const imageFile = req.file;
   let tempFilePath: string | null = null; // Variable to hold the temp file path
