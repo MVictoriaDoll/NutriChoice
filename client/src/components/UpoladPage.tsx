@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { uploadReceipt } from '../services/apiService';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
+import { useAuth0 } from '@auth0/auth0-react';
 import './UploadPage.css';
 
 const UploadPage: FC = () => {
@@ -12,20 +13,23 @@ const UploadPage: FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
+
+    if (!isAuthenticated) {
+      return loginWithRedirect();
+    }
 
     setIsUploading(true);
     setUploadError(null);
 
     try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        },
-      });
+      const token = await getAccessTokenSilently();
+      localStorage.setItem('user_token', token);
+
+      const result = await uploadReceipt(file);
 
       const result = await uploadReceipt(file, token);
 

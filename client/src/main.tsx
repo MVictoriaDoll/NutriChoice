@@ -1,4 +1,3 @@
-// src/main.tsx
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
@@ -19,6 +18,8 @@ createRoot(document.getElementById('root')!).render(
           redirect_uri: window.location.origin,
           audience,
         }}
+        useRefreshTokens={true}
+        cacheLocation="localstorage"
       >
         <App />
       </Auth0Provider>
