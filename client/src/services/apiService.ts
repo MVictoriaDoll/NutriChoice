@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
-if(!API_URL) {
-  console.error('VITE_API_URL is not set in .env file.')
+if (!API_URL) {
+  console.error('VITE_BACKEND_BASE_URL is not set in .env file.');
 }
+
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
 });
 
 apiClient.interceptors.request.use(
@@ -14,16 +15,16 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('user_token');
 
     if (token) {
-      config.headers.Authorization = `Bearer $(token)`;
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = `Bearer ${token}`;
     } else {
       let anonymousId = localStorage.getItem('anonymous_user_id');
 
       if (!anonymousId) {
-        // create anonymous Id if none exist and save it
         anonymousId = crypto.randomUUID();
-        localStorage.setItem('anonymous_user_id', anonymousId)
+        localStorage.setItem('anonymous_user_id', anonymousId);
       }
-      // Add anonymous ID to the custom header
+      config.headers = config.headers ?? {};
       config.headers['X-User-Id'] = anonymousId;
     }
     return config;
@@ -33,13 +34,13 @@ apiClient.interceptors.request.use(
   }
 );
 
-// ---API Functions ---
+// ---API Functions---
 
 export const uploadReceipt = async (file: File) => {
   const formData = new FormData();
   formData.append('receiptFile', file);
 
-  try{
+  try {
     const response = await apiClient.post('/receipts/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
