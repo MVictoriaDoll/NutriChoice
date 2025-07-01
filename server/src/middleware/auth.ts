@@ -16,19 +16,28 @@ export const authenticateUser: RequestHandler = async (req: Request, res: Respon
       // return next();
     }
 
-    if(anonymousId) {
-      const user = await prisma.user.upsert({
-        where: {
-          anonymousId: anonymousId,
-        },
-        update: {
-          lastLogin: new Date(),
-        },
-        create: {
-          anonymousId: anonymousId,
-          displayName: `Guest-${anonymousId.substring(0,8)}`,
-        }
+    if (anonymousId) {
+
+      // 1. Try to find an existing user by their anonymousId.
+      let user = await prisma.user.findUnique({
+        where: { anonymousId: anonymousId },
       });
+
+      if (user) {
+        // 2a. If the user exists, update their lastLogin time.
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() },
+        });
+      } else {
+        // 2b. If the user does not exist, create a new one.
+        user = await prisma.user.create({
+          data: {
+            anonymousId: anonymousId,
+            displayName: `Guest-${anonymousId.substring(0, 8)}`,
+          },
+        });
+      }
 
       req.userId = user.id;
       return next();
