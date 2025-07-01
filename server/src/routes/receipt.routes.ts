@@ -1,5 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
+import { checkJwt } from "../middleware/auth0";
+
 import {
   uploadReceipt,
   getReceiptById,
@@ -9,12 +11,7 @@ import {
 
 const router = Router();
 
-router.get('/ping', (req, res) => {
-  console.log('✅ GET /api/receipts/ping reached');
-  res.send('pong');
-});
-
-
+router.use(checkJwt);
 
 const upload = multer({
   storage: multer.memoryStorage(),

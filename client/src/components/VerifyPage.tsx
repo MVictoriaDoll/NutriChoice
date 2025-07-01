@@ -95,7 +95,7 @@ useEffect (() => {
             <p className='verify-label'>Original label: {item.originalBillLabel}</p>
               {/* Editable input for AI-suggested name */}
             <p className='verify-suggestion'>
-              AI suggestion: 
+              AI suggestion:
              <input className='verify-input' type="text" value={item.aiSuggestedName} onChange={(e)=> handleAiSuggestedName(item.id, e.target.value)} />
              </p>
               {/* Price as shown on the receipt (not editable) */}

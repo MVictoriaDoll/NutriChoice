@@ -92,7 +92,9 @@ export const receiptService = {
           aiSuggestedName: item.aiSuggestedName || '',
           price: item.price !== null ? item.price : 0,
           isFoodItem: typeof item.isFoodItem === 'boolean' ? item.isFoodItem : false,
-          nutritionDetails: item.isFoodItem ? JSON.parse(JSON.stringify(item.nutritionDetails || {})) : JSON.parse(JSON.stringify({})),
+          nutritionDetails: item.isFoodItem
+            ? (JSON.parse(JSON.stringify(item.nutritionDetails || {})) as Prisma.InputJsonValue)
+            : (JSON.parse(JSON.stringify({})) as Prisma.InputJsonValue),
           classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
           manualCorrection: false,
           receiptId: receipt.id,
@@ -117,38 +119,52 @@ export const receiptService = {
     }
   ) => {
     const { nutritionSummary, aiFeedbackReceipt, items: updatedItemsData } = data;
-    const updatedReceipt = await prisma.$transaction(async (prismaTx: Prisma.TransactionClient) => {
-      // update the contents of receipt
-      const receipt = await prismaTx.receipt.update({
-        where: { id: receiptId, userId: userId },
-        data: {
-          nutritionSummary: JSON.parse(JSON.stringify(nutritionSummary || {})),
-          aiFeedbackReceipt: aiFeedbackReceipt || undefined,
-          status: 'verified',
-        },
-      });
+    const updatedReceipt = await prisma.$transaction(
+      async (prismaTx: Prisma.TransactionClient) => {
+        const existing = await prismaTx.receipt.findFirst({
+          where: { id: receiptId, userId },
+        });
+        if (!existing) {
+          throw new Error('Receipt not found or unauthorized');
+        }
 
-      await prismaTx.item.deleteMany({ where: { receiptId: receiptId } });
-      if (updatedItemsData && updatedItemsData.length > 0) {
-        const itemsToCreate = updatedItemsData.map((item) => ({
-          originalBillLabel: item.originalBillLabel || '',
-          aiSuggestedName: item.aiSuggestedName || '',
-          price: item.price !== null ? item.price : 0,
-          isFoodItem: typeof item.isFoodItem === 'boolean' ? item.isFoodItem : false,
-          nutritionDetails: item.isFoodItem ? JSON.parse(JSON.stringify(item.nutritionDetails || {})) : JSON.parse(JSON.stringify({})),
-          classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
-          manualCorrection: true,
-          receiptId: receipt.id,
-        }));
-        await prismaTx.item.createMany({ data: itemsToCreate });
+        // update the contents of receipt
+        const receipt = await prismaTx.receipt.update({
+          where: { id: receiptId },
+          data: {
+            nutritionSummary: JSON.parse(JSON.stringify(nutritionSummary || {})),
+            aiFeedbackReceipt: aiFeedbackReceipt || undefined,
+            status: 'verified',
+          },
+        });
+
+        // delete old items
+        await prismaTx.item.deleteMany({ where: { receiptId } });
+        if (updatedItemsData && updatedItemsData.length > 0) {
+          const itemsToCreate = updatedItemsData.map((item) => ({
+            originalBillLabel: item.originalBillLabel || '',
+            aiSuggestedName: item.aiSuggestedName || '',
+            price: item.price !== null ? item.price : 0,
+            isFoodItem: typeof item.isFoodItem === 'boolean' ? item.isFoodItem : false,
+            nutritionDetails: item.isFoodItem
+              ? (JSON.parse(JSON.stringify(item.nutritionDetails || {})) as Prisma.InputJsonValue)
+              : (JSON.parse(JSON.stringify({})) as Prisma.InputJsonValue),
+            classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
+            manualCorrection: true,
+            receiptId: receipt.id,
+          }));
+          await prismaTx.item.createMany({ data: itemsToCreate });
+        }
+        await receiptService._processAndAggregateUserNutrition(
+          prismaTx,
+          userId
+        );
+
+        return receipt;
       }
-      await receiptService._processAndAggregateUserNutrition(prismaTx, userId);
-
-      return receipt;
-    });
+    );
     return updatedReceipt;
   },
-
 
   _processAndAggregateUserNutrition: async (prismaTx: Prisma.TransactionClient, userId: string) => {
     // Aggregate based on receipts that are either 'processed' or 'verified'
