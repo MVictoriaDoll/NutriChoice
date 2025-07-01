@@ -2,7 +2,8 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadReceipt } from '../services/apiService';
-import './UploadPage.css'
+import axios from 'axios';
+import './UploadPage.css';
 
 const UploadPage: FC = () => {
   const [dragging, setDragging] = useState(false);
@@ -27,40 +28,46 @@ const UploadPage: FC = () => {
       } else {
         throw new Error('Receipt ID not found in the server response');
       }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'An unexpected error occurred.';
+    } catch (error: unknown) {
+      let errorMessage = 'An unexpected error occurred.';
+
+      if (axios.isAxiosError(error) && error.response) {
+        errorMessage = error.response.data?.message ?? errorMessage;
+      }
+
       setUploadError(errorMessage);
       console.error('Upload failed:', error);
     } finally {
       setIsUploading(false);
     }
-
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
       console.log('The file you selected to upload is:', file);
       handleFileUpload(file);
     }
-  }
-
+  };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files?.[0]
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
     if (file) {
       console.log('Drag and drop to upload:', file);
       handleFileUpload(file);
     }
-  }
+  };
 
   return (
     <div className="uploadPageWrapper">
       <h2 className="uploadPageTitle">Upload Your Receipt</h2>
 
-      <label htmlFor="file-input" className={`uploadButton ${isUploading ? 'disabled' : ''}`}>
+      <label
+        htmlFor="file-input"
+        className={`uploadButton ${isUploading ? 'disabled' : ''}`}
+      >
         {isUploading ? 'Processing...' : 'Upload your grocery bill here'}
       </label>
       <input
@@ -74,17 +81,24 @@ const UploadPage: FC = () => {
       />
 
       <div
-        className={`drop-zone ${dragging ? 'dragging' : ''} ${isUploading ? 'disabled' : ''}`}
-        onDragOver={e => { if (!isUploading) { e.preventDefault(); setDragging(true); } }}
+        className={`drop-zone ${dragging ? 'dragging' : ''} ${
+          isUploading ? 'disabled' : ''
+        }`}
+        onDragOver={(e) => {
+          if (!isUploading) {
+            e.preventDefault();
+            setDragging(true);
+          }
+        }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
       >
         <p>Or drag and drop your bill here</p>
       </div>
-      {/* UI Feedback */}
-      {uploadError && <p className='upload-error'>Error: {uploadError}</p>}
-    </div>
-  )
-}
 
-export default UploadPage
+      {uploadError && <p className="upload-error">Error: {uploadError}</p>}
+    </div>
+  );
+};
+
+export default UploadPage;
