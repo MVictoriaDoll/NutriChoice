@@ -35,21 +35,19 @@ apiClient.interceptors.request.use(
 
 // ---API Functions ---
 
-export const uploadReceipt = async (file: File) => {
+// apiService.ts
+export const uploadReceipt = async (file: File, token: string) => {
   const formData = new FormData();
   formData.append('receiptFile', file);
 
-  try{
-    const response = await apiClient.post('/receipts/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading receipt: ', error);
-    throw error;
-  }
+  const response = await axios.post('/api/receipts/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
 };
 
 export const getAllReceipts = async () => {

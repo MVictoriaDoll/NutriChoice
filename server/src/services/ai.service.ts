@@ -10,9 +10,11 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
 
 const chatModel = new ChatGoogleGenerativeAI({
   model: config.geminiModelName,
+  apiKey: config.googleApiKey,
   maxOutputTokens: 2048,
   temperature: 0.1,
 });
+
 
 // --- PROMPT: For initial image validation ---
 const textValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
