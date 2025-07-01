@@ -54,26 +54,14 @@ const METADATA_EXTRACTION_PROMPT = ChatPromptTemplate.fromMessages([
   metadataExtractionHumanPrompt
 ]);
 
-const itemListExtractionSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
-  `From the provided text, extract only the lines that represent purchased items. Do not include sums, taxes, discounts, or any other information.`
+const singleItemAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
+  `You are an expert grocery receipt analyst. Your task is to extract details for a single item line. The text may be in German; translate relevant values into English.
+IMPORTANT: Do NOT return JSON. Return a single line with values separated by a pipe character (|) in the specified order.
+**CRITICAL RULE:** If the provided line is clearly NOT a purchased grocery item (e.g., it is a subtotal, a discount, a tax line, an address, or just a price), you MUST return the single word "IGNORE".`
 );
 
-const itemListExtractionHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Please list all the individual item lines from this text, one per line:\n\n"{raw_text}"`
-);
-
-const ITEM_LIST_EXTRACTION_PROMPT = ChatPromptTemplate.fromMessages([
-  itemListExtractionSystemPrompt,
-  itemListExtractionHumanPrompt
-]);
-
-const BulkItemAnalysisSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
-  `You are an expert grocery receipt analyst. Your task is to analyze a list of item lines and provide details for each one. The text may be in German; translate relevant values into English.
-  IMPORTANT: Do NOT return JSON. Return a list where each item is on a new line, with details separated by a pipe character (|) in the specified order.`
-);
-
-const BulkItemAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `For each item line in the list provided below, extract the following details in this exact order, separated by a pipe (|):
+const singleItemAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
+  `From the provided item line, extract the following details in this exact order, separated by a pipe (|):
   originalBillLabel|aiSuggestedName|price|isFoodItem|classification|nutritionDetails
 
   TASK DETAILS FOR EACH ITEM:
@@ -81,25 +69,24 @@ const BulkItemAnalysisHumanPrompt = HumanMessagePromptTemplate.fromTemplate(
   - aiSuggestedName: A clean, recognizable English name for the product.
   - price: The final numeric price for the line item.
   - isFoodItem: A boolean ('true' or 'false').
-  - classification: If not a food item, must be 'Other'. Otherwise, categorize as "Fresh Food", "Processed", "High Sugar", etc.
+  - classification: If not a food item, must be 'Other'. Otherwise, categorize as "Fresh Food", "Processed", "High Sugar", or "Good NutriScore". before categorizing "Processed" first check for "Good NutriScore".
   - nutritionDetails: If not a food item, must be "EMPTY". Otherwise, provide a comma-separated list of 5-6 key nutritional benefits.
 
-  EXAMPLE:
-  Input List:
-  K.Eier 1,99 B
-  Cunchips Cheese 0,99 B
+  EXAMPLE 1:
+  Input: "K.Eier 1,99 B"
+  Output: K.Eier|Eggs|1.99|true|Fresh Food|Complete Protein,Supports Good Cholesterol,Heart Health
 
-  Expected Output:
-  K.Eier|Eggs|1.99|true|Fresh Food|Complete Protein,Supports Good Cholesterol,Heart Health
-  Cunchips Cheese|Cheese Chips|0.99|true|Processed|EMPTY
+  EXAMPLE 2:
+  Input: "Summe 60,70"
+  Output: IGNORE
 
-  ITEM LIST TO ANALYZE:
-  "{item_list}"`
+  ITEM LINE TO ANALYZE:
+  "{item_line}"`
 );
 
-const BULK_ITEM_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
-  BulkItemAnalysisSystemPrompt,
-  BulkItemAnalysisHumanPrompt
+const SINGLE_ITEM_ANALYSIS_PROMPT = ChatPromptTemplate.fromMessages([
+  singleItemAnalysisSystemPrompt,
+  singleItemAnalysisHumanPrompt
 ]);
 
 
@@ -166,72 +153,54 @@ export const aiService = {
     };
 
     const metadataChain = METADATA_EXTRACTION_PROMPT.pipe(chatModel);
-    const metadataPromise = metadataChain.invoke({ raw_text: rawText });
-
-    const itemListChain = ITEM_LIST_EXTRACTION_PROMPT.pipe(chatModel);
-    const itemListPromise = itemListChain.invoke({raw_text: rawText});
-
-    const [metadataResponse, itemListResponse] = await Promise.all([metadataPromise, itemListPromise]);
-
+    const metadataResponse = await metadataChain.invoke({ raw_text: rawText });
     (metadataResponse.content as string).split('\n').forEach(line => {
       if (line.toLowerCase().startsWith('purchasedate:')) result.purchaseDate = line.substring(line.indexOf(':') + 1).trim();
         else if (line.toLowerCase().startsWith('totalamount:')) result.totalAmount = parseFloat(line.substring(line.indexOf(':') + 1).trim());
         else if (line.toLowerCase().startsWith('currency:')) result.currency = line.substring(line.indexOf(':') + 1).trim();
     });
 
-    const itemListContent = itemListResponse.content;
-    let itemLinesAsString: string;
 
-    if (typeof itemListContent === 'string') {
-        itemLinesAsString = itemListContent;
-    } else if (Array.isArray(itemListContent) && itemListContent.length > 0 && typeof itemListContent[0] === 'object' && 'text' in itemListContent[0]) {
-        itemLinesAsString = (itemListContent[0] as { text: string }).text;
-    } else {
-        itemLinesAsString = ''; // Default to an empty string if the format is unexpected or empty
-    }
+    const allLines = rawText.split('\n').filter(line => line.trim() !== '');
+    const chunkSize = 5; // Process 5 items at a time to stay under the free tier limit
+    console.log(`[DEBUG] Analyzing all ${allLines.length} lines in batches of ${chunkSize}...`);
 
-    if (!itemLinesAsString || itemLinesAsString.trim() === '') {
-        console.warn('[DEBUG] No items found by AI to analyze.');
-        return result;
-    }
+    const itemDetailChain = SINGLE_ITEM_ANALYSIS_PROMPT.pipe(chatModel);
 
-    const bulkAnalysisChain = BULK_ITEM_ANALYSIS_PROMPT.pipe(chatModel);
-    const bulkAnalysisResponse = await bulkAnalysisChain.invoke({ item_list: itemLinesAsString });
+    for (let i = 0; i < allLines.length; i += chunkSize) {
+        const chunk = allLines.slice(i, i + chunkSize);
+        console.log(`[DEBUG] Processing batch ${i / chunkSize + 1}...`);
 
-    const bulkAnalysisContent = bulkAnalysisResponse.content;
-    let analyzedItemLinesAsString: string;
+        const itemAnalysisPromises = chunk.map(line => itemDetailChain.invoke({ item_line: line }));
+        const analyzedItemResponses = await Promise.all(itemAnalysisPromises);
 
-    if (typeof bulkAnalysisContent === 'string') {
-        analyzedItemLinesAsString = bulkAnalysisContent;
-    } else if (Array.isArray(bulkAnalysisContent) && bulkAnalysisContent.length > 0 && typeof bulkAnalysisContent[0] === 'object' && 'text' in bulkAnalysisContent[0]) {
-        analyzedItemLinesAsString = (bulkAnalysisContent[0] as { text: string }).text;
-    } else {
-        console.warn('[DEBUG] Bulk analysis returned unexpected format, cannot process items:', bulkAnalysisContent);
-        analyzedItemLinesAsString = ''; // Default to empty string to prevent crash
-    }
+        // --- Process the results of the current batch ---
+        for (const detailResponse of analyzedItemResponses) {
+            const itemDetailString = detailResponse.content as string;
 
-    const analyzedItemLines = (analyzedItemLinesAsString).split('\n').filter(line => line.trim() !== '');
-
-    // Parse the final, detailed item lines
-    for (const line of analyzedItemLines) {
-        const parts = line.split('|');
-        if (parts.length === 6) {
-            const price = parseFloat(parts[2]?.trim());
-            const nutritionString = parts[5]?.trim();
-            let nutritionData: Record<string, unknown> = {};
-            if (nutritionString && nutritionString.toUpperCase() !== 'EMPTY') {
-                nutritionData = { benefits: nutritionString.split(',').map(benefit => benefit.trim()) };
+            if (itemDetailString.trim().toUpperCase() === 'IGNORE') {
+                continue; // Skip this line as it's not an item
             }
-            result.items.push({
-                originalBillLabel: parts[0]?.trim(),
-                aiSuggestedName: parts[1]?.trim(),
-                price: isNaN(price) ? 0 : price,
-                isFoodItem: parts[3]?.trim().toLowerCase() === 'true',
-                classification: parts[4]?.trim(),
-                nutritionDetails: nutritionData,
-            });
-        } else {
-            console.warn(`Skipping malformed item detail line: ${line}`);
+
+            const parts = itemDetailString.split('|');
+            if (parts.length === 6) {
+                const price = parseFloat(parts[2]?.trim());
+                const nutritionString = parts[5]?.trim();
+                let nutritionData: Record<string, unknown> = {};
+                if (nutritionString && nutritionString.toUpperCase() !== 'EMPTY') {
+                    nutritionData = { benefits: nutritionString.split(',').map(benefit => benefit.trim()) };
+                }
+                result.items.push({
+                    originalBillLabel: parts[0]?.trim(),
+                    aiSuggestedName: parts[1]?.trim(),
+                    price: isNaN(price) ? 0 : price,
+                    isFoodItem: parts[3]?.trim().toLowerCase() === 'true',
+                    classification: parts[4]?.trim(),
+                    nutritionDetails: nutritionData,
+                });
+            } else {
+                console.warn(`Skipping malformed item detail line from AI: ${itemDetailString}`);
+            }
         }
     }
 
