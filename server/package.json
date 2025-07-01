@@ -21,6 +21,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@langchain/community": "^0.3.47",
     "@langchain/core": "^0.3.61",
     "@langchain/google-genai": "^0.2.13",
     "@prisma/client": "^6.10.1",
@@ -31,7 +32,8 @@
     "express-list-endpoints": "^7.1.1",
     "multer": "^2.0.1",
     "express-jwt": "^7.7.5",
-    "jwks-rsa": "^3.0.2"
+    "jwks-rsa": "^3.0.2",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

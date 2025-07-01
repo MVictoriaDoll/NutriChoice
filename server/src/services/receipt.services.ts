@@ -36,6 +36,40 @@ export const receiptService = {
   ) => {
     // Prisma transaction - atomicity
     const newReceipt = await prisma.$transaction(async (prismaTx: Prisma.TransactionClient) => {
+      console.log('[DEBUG] Data received for nutrition calculation:', JSON.stringify(parsedReceiptData.items, null, 2));
+      const nutritionSummary : ReceiptNutritionSummaryJson = {
+        calculatedScore: 0,
+        freshFoods: 0,
+        highSugarItems: 0,
+        processedFood: 0,
+        goodNutriScore: 0,
+      };
+
+      const foodItemCount = parsedReceiptData.items.filter(item => item.isFoodItem).length;
+      console.log(`[DEBUG] Found ${foodItemCount} food items to analyze.`);
+
+      if (foodItemCount > 0) {
+        console.log('[DEBUG] Starting nutrition summary calculation...');
+        let freshCount = 0, sugarCount = 0, processedCount = 0, goodScoreCount = 0;
+        parsedReceiptData.items.forEach(item => {
+          if(item.isFoodItem) {
+            console.log(`[DEBUG] Processing item: ${item.aiSuggestedName}, Classification: "${item.classification}"`);
+            switch (item.classification) {
+              case 'Fresh Food': freshCount++; break;
+              case 'High Sugar': sugarCount++; break;
+              case 'Processed': processedCount++; break;
+              case 'Good Nutri-Score': goodScoreCount++; break
+            }
+          }
+        });
+        nutritionSummary.freshFoods = (freshCount / foodItemCount) * 100;
+        nutritionSummary.highSugarItems = (sugarCount / foodItemCount) * 100;
+        nutritionSummary.processedFood = (processedCount / foodItemCount) * 100;
+        nutritionSummary.goodNutriScore = (goodScoreCount / foodItemCount) * 100;
+
+        nutritionSummary.calculatedScore = (nutritionSummary.freshFoods + nutritionSummary.goodNutriScore) - (nutritionSummary.processedFood + nutritionSummary.highSugarItems);
+        console.log('[DEBUG] Final calculated nutritionSummary:', nutritionSummary);
+      }
       const receipt = await prismaTx.receipt.create({
         data: {
           purchaseDate: parsedReceiptData.purchaseDate
@@ -47,14 +81,7 @@ export const receiptService = {
           currency: parsedReceiptData.currency || 'EUR',
           status: 'processed', // status after AI processing
           userId: userId,
-          // Basic summary (AI Generated)
-          nutritionSummary: JSON.parse(JSON.stringify({
-            calculatedScore: 0,
-            freshFoods: 0,
-            highSugarItems: 0,
-            processedFood: 0,
-            goodNutriScore: 0,
-          })),
+          nutritionSummary: nutritionSummary as Prisma.JsonObject,
           aiFeedbackReceipt: 'Initial AI analysis complete. Verify items',
         },
       });
@@ -70,7 +97,7 @@ export const receiptService = {
             : (JSON.parse(JSON.stringify({})) as Prisma.InputJsonValue),
           classification: item.isFoodItem ? item.classification || 'Other' : 'Other',
           manualCorrection: false,
-          receiptId: newReceipt.id,
+          receiptId: receipt.id,
         }));
         await prismaTx.item.createMany({ data: itemsToCreate });
       }
@@ -203,10 +230,16 @@ export const receiptService = {
   },
 
   getReceiptById: async (receiptId: string, userId: string) => {
-    return await prisma.receipt.findUnique({
-      where: { id: receiptId, userId: userId },
-      include: { items: true },
+    const receipt = await prisma.receipt.findUnique({
+      where: {id: receiptId},
+      include: {items: true},
     });
+
+    if (receipt && receipt.userId === userId) {
+      return receipt;
+    }
+
+    return null;
   },
 
   getAllReceipts: async (userId: string) => {
