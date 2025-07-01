@@ -9,8 +9,8 @@ datasource db {
 
 // 1. User Model
 model User {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  anonymousId       String?   // ✅ ya no es @unique
+  id                String    @id @map("_id") // ✅ CAMBIO: ya no es ObjectId
+  anonymousId       String?
   createdAt         DateTime  @default(now())
   lastLogin         DateTime  @updatedAt
   displayName       String?
@@ -36,7 +36,7 @@ model Receipt {
   aiFeedbackReceipt String?
   status            String
 
-  userId            String  
+  userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items             Item[]
@@ -64,7 +64,7 @@ model Item {
 // 4. Nutrition Summary
 model UserNutritionSummary {
   id                        String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId                    String  @unique 
+  userId                    String  @unique
   user                      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   nutritionScore            Float   @default(0)
   freshFoodsPercentage      Float   @default(0)
@@ -80,7 +80,7 @@ model UserNutritionSummary {
 // 5. Grocery List
 model GroceryList {
   id                     String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId                 String   @unique 
+  userId                 String   @unique
   user                   User     @relation(fields: [userId], references:[id], onDelete: Cascade)
   healthyItems           String[]
   missingNutritionItems  String[]
