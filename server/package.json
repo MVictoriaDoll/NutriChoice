@@ -29,7 +29,9 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-list-endpoints": "^7.1.1",
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "express-jwt": "^7.7.5",
+    "jwks-rsa": "^3.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
