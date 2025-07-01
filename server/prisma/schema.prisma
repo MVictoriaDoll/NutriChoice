@@ -10,7 +10,7 @@ datasource db {
 // 1. User Model
 model User {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  anonymousId       String?   // <-- @unique eliminado
+  anonymousId       String?   // ✅ ya no es @unique
   createdAt         DateTime  @default(now())
   lastLogin         DateTime  @updatedAt
   displayName       String?
@@ -36,10 +36,11 @@ model Receipt {
   aiFeedbackReceipt String?
   status            String
 
-  userId            String  @db.ObjectId
+  userId            String  
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items             Item[]
+
   @@map("receipts")
 }
 
@@ -62,16 +63,16 @@ model Item {
 
 // 4. Nutrition Summary
 model UserNutritionSummary {
-  id                       String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId                   String  @unique @db.ObjectId
-  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nutritionScore           Float   @default(0)
-  freshFoodsPercentage     Float   @default(0)
-  highSugarItemsPercentage Float   @default(0)
-  processedFoodPercentage  Float   @default(0)
-  goodNutriScorePercentage Float   @default(0)
-  overallAiFeedback        String?
-  lastUpdated              DateTime  @updatedAt
+  id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId                    String  @unique 
+  user                      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nutritionScore            Float   @default(0)
+  freshFoodsPercentage      Float   @default(0)
+  highSugarItemsPercentage  Float   @default(0)
+  processedFoodPercentage   Float   @default(0)
+  goodNutriScorePercentage  Float   @default(0)
+  overallAiFeedback         String?
+  lastUpdated               DateTime  @updatedAt
 
   @@map("user_nutrition_summaries")
 }
@@ -79,8 +80,8 @@ model UserNutritionSummary {
 // 5. Grocery List
 model GroceryList {
   id                     String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId                 String   @unique @db.ObjectId
-  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String   @unique 
+  user                   User     @relation(fields: [userId], references:[id], onDelete: Cascade)
   healthyItems           String[]
   missingNutritionItems  String[]
   sinItems               String[]

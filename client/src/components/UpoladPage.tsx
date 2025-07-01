@@ -2,7 +2,6 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadReceipt } from '../services/apiService';
-import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import { useAuth0 } from '@auth0/auth0-react';
 import './UploadPage.css';
@@ -29,7 +28,7 @@ const UploadPage: FC = () => {
       const token = await getAccessTokenSilently();
       localStorage.setItem('user_token', token);
 
-      const result = await uploadReceipt(file);
+      //const result = await uploadReceipt(file);
 
       const result = await uploadReceipt(file, token);
 

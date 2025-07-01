@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import type { Item } from '../Types/verifypage';
+import { useAuth0 } from '@auth0/auth0-react';
+
 import './VerifyPage.css';
 
 
@@ -8,6 +10,8 @@ export default function VerifyPage() {
   const [items, setItems] = useState<Item[]>([]);
 
   const {receiptId} = useParams();
+  const { getAccessTokenSilently } = useAuth0();
+
   
   // Initial state with mock items (simulating the uploaded receipt data)
   /*const [items, setItems] = useState([
@@ -36,31 +40,34 @@ export default function VerifyPage() {
     navigate('/dashboard');
   }
   
-useEffect (() => {
-  if(!receiptId) return;
+useEffect(() => {
+  if (!receiptId) return;
+
   const fetchReceiptItems = async () => {
     try {
-      const response = await fetch (`http://localhost:4000/receipts/${receiptId}`, {
-        headers: {
-          'X-User-Id': localStorage.getItem('anonymous_user_id') || '',
+      const token = await getAccessTokenSilently();
 
+      const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error('Failed to fetch receipt');
       }
 
       const data = await response.json();
-      console.log('data recibida del backend:', data);
+      console.log('✅ Data recibida del backend:', data);
       setItems(data.items || []);
-
-    } catch (error){
-      console.error('Erro fetching receip', error)
+    } catch (error) {
+      console.error('❌ Error fetching receipt:', error);
     }
   };
+
   fetchReceiptItems();
-}, [receiptId]);
+}, [receiptId, getAccessTokenSilently]);
+
 
 
 

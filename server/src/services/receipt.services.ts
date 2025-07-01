@@ -29,10 +29,12 @@ export const receiptService = {
     fileOriginalName: string,
     parsedReceiptData: AIReceiptData
   ) => {
-    const [, dbUserId] = userId.split('|');
-    if (!dbUserId || !/^[0-9a-f]{24}$/i.test(dbUserId)) {
-      throw new Error(`Invalid userId format: ${userId}`);
-    }
+    //const [, dbUserId] = userId.split('|');
+    //if (!dbUserId || !/^[0-9a-f]{24}$/i.test(dbUserId)) {
+      //throw new Error(`Invalid userId format: ${userId}`);
+    //}
+    const dbUserId = userId;
+
 
     const newReceipt = await prisma.$transaction(async (prismaTx: Prisma.TransactionClient) => {
       console.log('[DEBUG] Data received for nutrition calculation:', JSON.stringify(parsedReceiptData.items, null, 2));

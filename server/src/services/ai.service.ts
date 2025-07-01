@@ -10,11 +10,9 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
 
 const chatModel = new ChatGoogleGenerativeAI({
   model: config.geminiModelName,
-  apiKey: config.googleApiKey,
   maxOutputTokens: 2048,
   temperature: 0.1,
 });
-
 
 // --- PROMPT: For initial image validation ---
 const textValidationSystemPrompt = SystemMessagePromptTemplate.fromTemplate(
@@ -146,8 +144,83 @@ export const aiService = {
     console.log('Step 2 successful.');
     return true;
   },
-
   analyzeReceiptInChunks: async (rawText: string): Promise<AIReceiptData> => {
+  console.log('Step 3: Analyzing receipt in chunks...');
+  const result: AIReceiptData = {
+    purchaseDate: null,
+    totalAmount: null,
+    currency: null,
+    originalRawText: rawText,
+    items: [],
+  };
+
+  const metadataChain = METADATA_EXTRACTION_PROMPT.pipe(chatModel);
+  const metadataResponse = await metadataChain.invoke({ raw_text: rawText });
+  (metadataResponse.content as string).split('\n').forEach(line => {
+    if (line.toLowerCase().startsWith('purchasedate:')) {
+      result.purchaseDate = line.substring(line.indexOf(':') + 1).trim();
+    } else if (line.toLowerCase().startsWith('totalamount:')) {
+      result.totalAmount = parseFloat(line.substring(line.indexOf(':') + 1).trim());
+    } else if (line.toLowerCase().startsWith('currency:')) {
+      result.currency = line.substring(line.indexOf(':') + 1).trim();
+    }
+  });
+
+  const allLines = rawText.split('\n').filter(line => line.trim() !== '');
+  const chunkSize = 5;
+  console.log(`[DEBUG] Analyzing all ${allLines.length} lines in batches of ${chunkSize}...`);
+
+  const itemDetailChain = SINGLE_ITEM_ANALYSIS_PROMPT.pipe(chatModel);
+
+  for (let i = 0; i < allLines.length; i += chunkSize) {
+    const chunk = allLines.slice(i, i + chunkSize);
+    console.log(`[DEBUG] Processing batch ${i / chunkSize + 1}...`);
+
+    const itemAnalysisPromises = chunk.map(line => itemDetailChain.invoke({ item_line: line }));
+    const analyzedItemResponses = await Promise.all(itemAnalysisPromises);
+
+    for (const detailResponse of analyzedItemResponses) {
+      const itemDetailString = detailResponse.content;
+
+      if (typeof itemDetailString !== 'string') {
+        console.warn('[AI WARNING] Expected string from Gemini, but got:', itemDetailString);
+        continue;
+      }
+
+      if (itemDetailString.trim().toUpperCase() === 'IGNORE') {
+        continue;
+      }
+
+      const parts = itemDetailString.trim().split('|');
+      if (parts.length === 6) {
+        const price = parseFloat(parts[2]?.trim());
+        const nutritionString = parts[5]?.trim();
+        let nutritionData: Record<string, unknown> = {};
+        if (nutritionString && nutritionString.toUpperCase() !== 'EMPTY') {
+          nutritionData = {
+            benefits: nutritionString.split(',').map(benefit => benefit.trim()),
+          };
+        }
+        result.items.push({
+          originalBillLabel: parts[0]?.trim(),
+          aiSuggestedName: parts[1]?.trim(),
+          price: isNaN(price) ? 0 : price,
+          isFoodItem: parts[3]?.trim().toLowerCase() === 'true',
+          classification: parts[4]?.trim(),
+          nutritionDetails: nutritionData,
+        });
+      } else {
+        console.warn(`[AI WARNING] Malformed item response skipped: ${itemDetailString}`);
+      }
+    }
+  }
+
+  console.log('Step 3 successful: Data parsed and structured in code.');
+  return result;
+},
+
+
+  /*analyzeReceiptInChunks: async (rawText: string): Promise<AIReceiptData> => {
     console.log('Step 3: Analyzing receipt in chunks...');
     const result: AIReceiptData = {
         purchaseDate: null, totalAmount: null, currency: null,
@@ -209,5 +282,5 @@ export const aiService = {
     console.log('Step 3 successful: Data parsed and structured in code.');
     return result;
 
-  },
+  },*/
 };
