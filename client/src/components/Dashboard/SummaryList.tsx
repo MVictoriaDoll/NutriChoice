@@ -53,7 +53,7 @@ export default function SummaryList (props:Props){
             <i className={item.iconClass}></i>
         </span>
         <span className="label">{item.label}</span>
-        <span className="value">{item.value}%</span>
+        <span className="value">{Math.round(item.value)}%</span>
       </li>
     ))
 

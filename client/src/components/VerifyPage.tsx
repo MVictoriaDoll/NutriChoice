@@ -9,10 +9,10 @@ import './VerifyPage.css';
 export default function VerifyPage() {
   const [items, setItems] = useState<Item[]>([]);
 
-  const {receiptId} = useParams();
+  const { receiptId } = useParams();
   const { getAccessTokenSilently } = useAuth0();
 
-  
+
   // Initial state with mock items (simulating the uploaded receipt data)
   /*const [items, setItems] = useState([
     {
@@ -35,69 +35,115 @@ export default function VerifyPage() {
   ]);*/
 
   const navigate = useNavigate();
-    // Navigate to the dashboard when user confirms the list
-  const handleConfirm = async () => {
-  if (!receiptId) return;
+  function calculateNutritionSummary(items: Item[]) {
+    const foodItems = items.filter((item) => item.isFoodItem);
+    const total = foodItems.length;
 
-  try {
-    const token = await getAccessTokenSilently();
+    const summary = {
+      calculatedScore: 0,
+      freshFoods: 0,
+      highSugarItems: 0,
+      processedFood: 0,
+      goodNutriScore: 0,
+    };
 
-    const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}/verify`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        items, 
-        aiFeedbackReceipt: "User reviewed and confirmed the receipt",
-        nutritionSummary: {}, 
-      }),
+    if (total === 0) return summary;
+
+    foodItems.forEach((item) => {
+      switch (item.classification) {
+        case 'Fresh Food':
+          summary.freshFoods++;
+          break;
+        case 'High Sugar':
+          summary.highSugarItems++;
+          break;
+        case 'Processed':
+          summary.processedFood++;
+          break;
+        case 'Good Nutri-Score':
+          summary.goodNutriScore++;
+          break;
+      }
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to update receipt');
-    }
+    summary.freshFoods = (summary.freshFoods / total) * 100;
+    summary.highSugarItems = (summary.highSugarItems / total) * 100;
+    summary.processedFood = (summary.processedFood / total) * 100;
+    summary.goodNutriScore = (summary.goodNutriScore / total) * 100;
 
-    const data = await response.json();
-    console.log('✅ Receipt updated:', data);
+    summary.calculatedScore =
+      summary.freshFoods +
+      summary.goodNutriScore -
+      (summary.highSugarItems + summary.processedFood);
 
-   
-    navigate(`/dashboard/${receiptId}`);
-    return;
-  } catch (error) {
-    console.error('Error updating receipt:', error);
+    return summary;
   }
-};
 
-  
-useEffect(() => {
-  if (!receiptId) return;
+  // Navigate to the dashboard when user confirms the list
+  const handleConfirm = async () => {
 
-  const fetchReceiptItems = async () => {
+    if (!receiptId) return;
+    const nutritionSummary = calculateNutritionSummary(items);
+
     try {
       const token = await getAccessTokenSilently();
 
-      const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}`, {
+      const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}/verify`, {
+        method: 'PUT',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          items,
+          aiFeedbackReceipt: "User reviewed and confirmed the receipt",
+          nutritionSummary,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch receipt');
+        throw new Error('Failed to update receipt');
       }
 
       const data = await response.json();
-      console.log('Data recibida del backend:', data);
-      setItems(data.items || []);
+      console.log('✅ Receipt updated:', data);
+
+
+      navigate(`/dashboard/${receiptId}`);
+      return;
     } catch (error) {
-      console.error('Error fetching receipt:', error);
+      console.error('Error updating receipt:', error);
     }
   };
 
-  fetchReceiptItems();
-}, [receiptId, getAccessTokenSilently]);
+
+  useEffect(() => {
+    if (!receiptId) return;
+
+    const fetchReceiptItems = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch receipt');
+        }
+
+        const data = await response.json();
+        console.log('Data recibida del backend:', data);
+        setItems(data.items || []);
+      } catch (error) {
+        console.error('Error fetching receipt:', error);
+      }
+    };
+
+    fetchReceiptItems();
+  }, [receiptId, getAccessTokenSilently]);
 
 
 
@@ -112,9 +158,9 @@ useEffect(() => {
     setItems(updatedItems);
 
   };
-   // Update AI-suggested name when user types in the input
+  // Update AI-suggested name when user types in the input
 
-  const handleAiSuggestedName = (id:string, newValue:string) => {
+  const handleAiSuggestedName = (id: string, newValue: string) => {
     const updatedItems = items.map(item =>
       item.id === id ? { ...item, aiSuggestedName: newValue } : item
     );
@@ -129,14 +175,14 @@ useEffect(() => {
       <ul className='verify-list'>
         {items.map(item => (
           <li key={item.id} className='verify-item'>
-             {/* Original product label as shown on the receipt */}
+            {/* Original product label as shown on the receipt */}
             <p className='verify-label'>Original label: {item.originalBillLabel}</p>
-              {/* Editable input for AI-suggested name */}
+            {/* Editable input for AI-suggested name */}
             <p className='verify-suggestion'>
               AI suggestion:
-             <input className='verify-input' type="text" value={item.aiSuggestedName} onChange={(e)=> handleAiSuggestedName(item.id, e.target.value)} />
-             </p>
-              {/* Price as shown on the receipt (not editable) */}
+              <input className='verify-input' type="text" value={item.aiSuggestedName} onChange={(e) => handleAiSuggestedName(item.id, e.target.value)} />
+            </p>
+            {/* Price as shown on the receipt (not editable) */}
             <p className='verify-price'>Price: ${item.price}</p>
             {/* Toggle to mark if item is food or not */}
             <p className='verify-food'> {/*Is Food: {''}*/}

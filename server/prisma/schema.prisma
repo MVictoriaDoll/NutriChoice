@@ -1,91 +1,91 @@
-generator client {
-  provider = "prisma-client-js"
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
 
-datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-}
+  datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+  }
 
-// 1. User Model
-model User {
-  id                String    @id @map("_id") // ✅ CAMBIO: ya no es ObjectId
-  anonymousId       String?
-  createdAt         DateTime  @default(now())
-  lastLogin         DateTime  @updatedAt
-  displayName       String?
-  preferences       Json?
-  receipts          Receipt[]
-  nutritionSummary  UserNutritionSummary?
-  groceryList       GroceryList?
+  // 1. User Model
+  model User {
+    id                String    @id @map("_id") // ✅ CAMBIO: ya no es ObjectId
+    anonymousId       String?
+    createdAt         DateTime  @default(now())
+    lastLogin         DateTime  @updatedAt
+    displayName       String?
+    preferences       Json?
+    receipts          Receipt[]
+    nutritionSummary  UserNutritionSummary?
+    groceryList       GroceryList?
 
-  @@map("users")
-}
+    @@map("users")
+  }
 
-// 2. Receipt Model
-model Receipt {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  uploadedAt        DateTime  @default(now())
-  purchaseDate      DateTime
-  imageUrl          String
-  originalRawText   String
-  totalAmount       Float
-  currency          String
+  // 2. Receipt Model
+  model Receipt {
+    id                String    @id @default(auto()) @map("_id") @db.ObjectId
+    uploadedAt        DateTime  @default(now())
+    purchaseDate      DateTime
+    imageUrl          String
+    originalRawText   String
+    totalAmount       Float
+    currency          String
 
-  nutritionSummary  Json?
-  aiFeedbackReceipt String?
-  status            String
+    nutritionSummary  Json?
+    aiFeedbackReceipt String?
+    status            String
 
-  userId            String
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId            String
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  items             Item[]
+    items             Item[]
 
-  @@map("receipts")
-}
+    @@map("receipts")
+  }
 
-// 3. Item Model
-model Item {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  originalBillLabel String
-  aiSuggestedName   String
-  price             Float
-  isFoodItem        Boolean
-  nutritionDetails  Json?
-  classification    String?
-  manualCorrection  Boolean @default(false)
+  // 3. Item Model
+  model Item {
+    id                String  @id @default(auto()) @map("_id") @db.ObjectId
+    originalBillLabel String
+    aiSuggestedName   String
+    price             Float
+    isFoodItem        Boolean
+    nutritionDetails  Json?
+    classification    String?
+    manualCorrection  Boolean @default(false)
 
-  receiptId         String  @db.ObjectId
-  receipt           Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+    receiptId         String  @db.ObjectId
+    receipt           Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 
-  @@map("items")
-}
+    @@map("items")
+  }
 
-// 4. Nutrition Summary
-model UserNutritionSummary {
-  id                        String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId                    String  @unique
-  user                      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nutritionScore            Float   @default(0)
-  freshFoodsPercentage      Float   @default(0)
-  highSugarItemsPercentage  Float   @default(0)
-  processedFoodPercentage   Float   @default(0)
-  goodNutriScorePercentage  Float   @default(0)
-  overallAiFeedback         String?
-  lastUpdated               DateTime  @updatedAt
+  // 4. Nutrition Summary
+  model UserNutritionSummary {
+    id                        String  @id @default(auto()) @map("_id") @db.ObjectId
+    userId                    String  @unique
+    user                      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    nutritionScore            Float   @default(0)
+    freshFoodsPercentage      Float   @default(0)
+    highSugarItemsPercentage  Float   @default(0)
+    processedFoodPercentage   Float   @default(0)
+    goodNutriScorePercentage  Float   @default(0)
+    overallAiFeedback         String?
+    lastUpdated               DateTime  @updatedAt
 
-  @@map("user_nutrition_summaries")
-}
+    @@map("user_nutrition_summaries")
+  }
 
-// 5. Grocery List
-model GroceryList {
-  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId                 String   @unique
-  user                   User     @relation(fields: [userId], references:[id], onDelete: Cascade)
-  healthyItems           String[]
-  missingNutritionItems  String[]
-  sinItems               String[]
-  lastGenerated          DateTime @updatedAt
+  // 5. Grocery List
+  model GroceryList {
+    id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId                 String   @unique
+    user                   User     @relation(fields: [userId], references:[id], onDelete: Cascade)
+    healthyItems           String[]
+    missingNutritionItems  String[]
+    sinItems               String[]
+    lastGenerated          DateTime @updatedAt
 
-  @@map("grocery_lists")
-}
+    @@map("grocery_lists")
+  }

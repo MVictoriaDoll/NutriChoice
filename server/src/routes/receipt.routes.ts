@@ -7,6 +7,7 @@ import {
   getReceiptById,
   getAllReceipts,
   verifyAndFinalizeReceipt,
+  getReceiptAnalysis,
 } from '../controllers/receipt.controller'
 
 const router = Router();
@@ -47,6 +48,10 @@ router.post(
   },
   uploadReceipt
 );
+
+router.get('/analysis', getReceiptAnalysis);
+
+
 
 
 router.get('/:receiptId', getReceiptById);

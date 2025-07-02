@@ -18,30 +18,35 @@ export function Dashboard() {
   const { getAccessTokenSilently } = useAuth0();
   const [summary, setSummary] = useState<Summary | null>(null);
 
-useEffect(() => {
-  const fetchSummary = async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(
-        `http://localhost:4000/api/receipts/analysis`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setSummary(data);
-    } catch (err) {
-      console.error("Dashboard summary error:", err);
-    }
-  };
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        console.log('[TOKEN from useEffect]', token);
 
-  fetchSummary(); // ya no hace falta el if(receiptId)
-}, [getAccessTokenSilently]);
+        const response = await fetch(
+          `http://localhost:4000/api/receipts/analysis`,
+          {
+            headers: {
+
+              Authorization: `Bearer ${token}`,
+
+
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setSummary(data);
+      } catch (err) {
+        console.error("Dashboard summary error:", err);
+      }
+    };
+
+    fetchSummary(); 
+  }, [getAccessTokenSilently]);
 
 
   return (
@@ -65,6 +70,7 @@ useEffect(() => {
       >
         Get Feedback
       </button>
+
     </section>
   );
 }

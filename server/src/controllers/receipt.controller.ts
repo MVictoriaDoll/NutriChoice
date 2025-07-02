@@ -177,6 +177,8 @@ export const verifyAndFinalizeReceipt: RequestHandler = async (
     aiFeedbackReceipt,
     items: updatedItemsData,
   } = req.body;
+  
+
 
   if (!userId) {
     console.error('Error in verifyAndFinalizeReceipt: userId is missing.');
@@ -201,5 +203,41 @@ export const verifyAndFinalizeReceipt: RequestHandler = async (
     console.error('Error verifying and finalizing receipt: ', error);
     next(error);
     return;
+  }
+};
+
+// get summary 
+export const getReceiptAnalysis: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { user: authUser } = req as Auth0Request;
+  const userId = authUser?.sub;
+
+  console.log('[Auth Header]', req.headers.authorization);
+  console.log('[Auth0 userId]', userId);
+
+  if (!userId) {
+    console.warn('[Warning] Missing userId from token');
+    res.status(401).json({ message: 'User not authenticated' });
+    return;
+  }
+
+  try {
+    const summary = await receiptService.getUserNutritionSummary(userId);
+    console.log('[ summary encontrado]', summary);
+
+    if (!summary) {
+      console.warn('[No summary found for user]', userId);
+      res.status(404).json({ message: 'Nutrition summary not found' });
+      return;
+    }
+
+    console.log('[Nutrition Summary]', summary);
+    res.json(summary);
+  } catch (error) {
+    console.error('Error in getReceiptAnalysis:', error);
+    next(error);
   }
 };

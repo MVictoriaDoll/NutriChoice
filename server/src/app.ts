@@ -25,6 +25,8 @@ app.use('/api/health', checkJwt, healthRoutes);
 
 
 app.use('/api/receipts', checkJwt, receiptRoutes);
+//app.use('/api/receipts', receiptRoutes);
+
 
 
 app.use('/api', apiRoutes);

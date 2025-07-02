@@ -40,7 +40,7 @@ export default function Score({ nutritionScore, freshFoodsPercentage, highSugarI
         </Pie>
       </PieChart>
       <div className="score-text">
-        <div className="score-number">{nutritionScore}</div>
+        <div className="score-number">{Math.round(nutritionScore)}</div>
         <p className="score-title">NutriScore</p>
       </div>
     </div>
