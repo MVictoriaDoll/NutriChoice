@@ -1,19 +1,17 @@
 import express, { ErrorRequestHandler } from 'express';
 import cors from 'cors';
-// import { authenticateUser } from './middleware/auth';
-import { checkJwt } from './middleware/auth0';
+import { checkJwt } from './middleware/auth0'; // Import the JWT checker
+import { attachUser } from './middleware/user'; // Import the user attacher
 import { errorHandler } from './middleware/errorHandler';
 import apiRoutes from './routes';
-import healthRoutes from './routes/health.routes';
-import receiptRoutes from './routes/receipt.routes';
 import config from './config';
 import path from 'path';
 
 const app = express();
 
 app.use(cors({
-  origin: '*', // Allow all origins for development
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allowed HTTP methods
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id'],
 }));
 
@@ -21,14 +19,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use('/api/health', checkJwt, healthRoutes);
+// --- The New, Robust Authentication Flow ---
+// For any route under /api, first validate the JWT, then attach the user from our DB.
+app.use('/api', checkJwt, attachUser, apiRoutes);
 
 
-app.use('/api/receipts', checkJwt, receiptRoutes);
-
-
-app.use('/api', apiRoutes);
-
+// This section is for serving your React frontend
 app.use(express.static(config.frontendBuildPath));
 app.get('/*foo', (req, res) => {
   res.sendFile(path.join(config.frontendBuildPath, 'index.html'));

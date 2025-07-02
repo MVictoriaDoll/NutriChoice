@@ -176,7 +176,17 @@ export const aiService = {
 
         // --- Process the results of the current batch ---
         for (const detailResponse of analyzedItemResponses) {
-            const itemDetailString = detailResponse.content as string;
+            const aiContent = detailResponse.content;
+            let itemDetailString: string;
+
+            if (typeof aiContent === 'string') {
+              itemDetailString = aiContent;
+            } else if (Array.isArray(aiContent) && aiContent.length > 0 && typeof aiContent[0] === 'object' && 'text' in aiContent[0]) {
+              itemDetailString = (aiContent[0] as { text: string }).text;
+            } else {
+              console.warn(`[DEBUG] Skipping item due to unexpected AI response format:`, aiContent);
+              continue; // Skip this item and move to the next one
+            }
 
             if (itemDetailString.trim().toUpperCase() === 'IGNORE') {
                 continue; // Skip this line as it's not an item

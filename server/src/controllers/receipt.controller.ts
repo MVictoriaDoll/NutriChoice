@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { aiService } from '../services/ai.service';
 import { receiptService } from '../services/receipt.services';
-import type { Auth0Request } from '../middleware/auth0';
+
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -11,8 +11,9 @@ export const uploadReceipt: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { user: authUser } = req as Auth0Request;
-  const userId = authUser?.sub;
+  console.log('uploadReceipt called by user:', req.userId);
+
+  const userId = req.userId;
   const imageFile = req.file;
   let tempFilePath: string | null = null;
 
@@ -107,8 +108,7 @@ export const getReceiptById: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { user: authUser } = req as Auth0Request;
-  const userId = authUser?.sub;
+  const userId = req.userId;
   const { receiptId } = req.params;
 
   if (!userId) {
@@ -143,8 +143,8 @@ export const getAllReceipts: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { user: authUser } = req as Auth0Request;
-  const userId = authUser?.sub;
+
+  const userId = req.userId;
 
   if (!userId) {
     console.error('Error in getAllReceipts: userId is missing.');
@@ -169,8 +169,8 @@ export const verifyAndFinalizeReceipt: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { user: authUser } = req as Auth0Request;
-  const userId = authUser?.sub;
+
+  const userId = req.userId;
   const { receiptId } = req.params;
   const {
     nutritionSummary,
