@@ -1,5 +1,5 @@
 .verify-page {
-   display: flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem 1rem;
@@ -122,20 +122,44 @@
 @media (min-width: 768px) {
   .verify-page {
     padding: 4rem 2rem;
-    max-width: 600px;
+    max-width: 800px;
     margin: auto;
   }
 
   .verify-title {
     font-size: 2.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .verify-list {
+    max-width: 360px;
+    gap: 1.5rem;
+  }
+
+  .verify-item {
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
   }
 
   .verify-label,
   .verify-suggestion {
-    font-size: 1.125rem;
+    font-size: 1rem;
+  }
+
+  .verify-price,
+  .verify-category {
+    font-size: 0.95rem;
   }
 
   .verify-toggle-btn {
-    font-size: 1.5rem;
+    font-size: 0.95rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    background-color: #f5ebff;
+    color: #4c1d95;
+    border: 1px solid #c4b5fd;
+    margin-top: 0.4rem;
   }
 }
+

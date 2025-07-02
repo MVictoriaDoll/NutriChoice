@@ -51,6 +51,7 @@ export function Dashboard() {
 
   return (
     <section className="dashboard">
+      <div className="dashboard-content"> 
       <h2 className="analysis-title">Shopping Analysis</h2>
       <Score
         nutritionScore={summary?.nutritionScore || 0}
@@ -70,6 +71,7 @@ export function Dashboard() {
       >
         Get Feedback
       </button>
+      </div>
 
     </section>
   );
