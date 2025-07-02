@@ -19,7 +19,7 @@ export default function Router () {
       <Route path="/" element={<FirstLandingPage />} />
       <Route path="/upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
       <Route path="/verify/:receiptId" element={<ProtectedRoute><VerifyPage /></ProtectedRoute>} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/:receiptId" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>}/>
        {/* any other route will be redirected to landing page */}
       <Route path="*" element={<FirstLandingPage />} />

@@ -36,9 +36,40 @@ export default function VerifyPage() {
 
   const navigate = useNavigate();
     // Navigate to the dashboard when user confirms the list
-  const handleConfirm = () =>   {
-    navigate('/dashboard');
+  const handleConfirm = async () => {
+  if (!receiptId) return;
+
+  try {
+    const token = await getAccessTokenSilently();
+
+    const response = await fetch(`http://localhost:4000/api/receipts/${receiptId}/verify`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        items, 
+        aiFeedbackReceipt: "User reviewed and confirmed the receipt",
+        nutritionSummary: {}, 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update receipt');
+    }
+
+    const data = await response.json();
+    console.log('✅ Receipt updated:', data);
+
+   
+    navigate(`/dashboard/${receiptId}`);
+    return;
+  } catch (error) {
+    console.error('Error updating receipt:', error);
   }
+};
+
   
 useEffect(() => {
   if (!receiptId) return;
@@ -58,10 +89,10 @@ useEffect(() => {
       }
 
       const data = await response.json();
-      console.log('✅ Data recibida del backend:', data);
+      console.log('Data recibida del backend:', data);
       setItems(data.items || []);
     } catch (error) {
-      console.error('❌ Error fetching receipt:', error);
+      console.error('Error fetching receipt:', error);
     }
   };
 
