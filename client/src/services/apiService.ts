@@ -62,3 +62,33 @@ export const getAllReceipts = async () => {
     throw error;
   }
 };
+
+export const getReceiptById = async (receiptId: string) => {
+  try {
+    const response = await apiClient.get(`/receipts/${receiptId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching receipt ${receiptId}: `, error);
+    throw error;
+  }
+};
+
+export const verifyReceipt = async (receiptId: string, data: any) => {
+  try {
+    const response = await apiClient.put(`/receipts/${receiptId}/verify`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error verifying receipt ${receiptId}: `, error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const response = await apiClient.get('/users/me');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};

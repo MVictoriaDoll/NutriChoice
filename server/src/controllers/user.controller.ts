@@ -1,65 +1,49 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { PrismaClient } from '@prisma/client';
-// import config from '../config';
+import { Request, Response, NextFunction } from 'express';
+import { userService } from '../services/user.service';
 
-const prisma = new PrismaClient();
-
-export const getUserProfile: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Fetches the profile for the currently authenticated user.
+ */
+export const getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
 
   if (!userId) {
-    console.error('Error in getUserProfile: userId is missing after authentication middleware.');
-    // 401 unauthorized
-    res.status(401).json({ message: 'Unauthenticated user.' });
+    res.status(401).json({ message: 'Authentication error: User ID not found.' });
     return;
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        nutritionSummary: true,
-        groceryList: true,
-      },
-    });
+    const userProfile = await userService.getProfile(userId);
 
-    if (user) {
-      res.json(user);
-    } else {
-      console.warn(`User profile not found for ID: ${userId}`);
-      // 404 Not found
+    if (!userProfile) {
       res.status(404).json({ message: 'User profile not found.' });
+      return;
     }
+
+    res.status(200).json(userProfile);
   } catch (error) {
-    console.error('Error fetching user profile: ', error);
-    next(error);
+    console.error('Error in getUserProfile controller:', error);
+    next(error); // Pass errors to the global error handler
   }
 };
 
-export const updateUserProfile: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.userId;
-  const { displayName, preferences } = req.body;
+/**
+ * Updates the profile for the currently authenticated user.
+ */
+export const updateUserProfile = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId;
+    const { displayName, preferences } = req.body;
 
-  if (!userId) {
-    console.error('Error in updateUserProfile: userId is missing after authentication middleware.');
-    // 401 unauthorized
-    res.status(401).json({ message: 'Unauthenticated user.' });
-    return;
-  }
+    if (!userId) {
+        res.status(401).json({ message: 'Authentication error: User ID not found.' });
+        return;
+    }
 
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        displayName: displayName || undefined,
-        preferences: preferences || undefined,
-        lastLogin: new Date(),
-      },
-    });
-
-    res.json(updatedUser);
-  } catch (error) {
-    console.error('Error updating user profile: ', error);
-    next(error);
-  }
+    try {
+        const updatedUser = await userService.updateProfile(userId, { displayName, preferences });
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error('Error in updateUserProfile controller:', error);
+        next(error);
+    }
 };

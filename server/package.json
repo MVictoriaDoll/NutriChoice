@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "nodemon --exec ts-node --files src/server.ts",
+    "db:reset:dev": "ts-node scripts/reset-db.ts development",
     "lint": "eslint \"{src/**/*.ts,*.js}\" --fix",
     "format": "prettier --write \"{src/**/*.ts,*.js}\"",
     "prisma:generate": "npx prisma generate",

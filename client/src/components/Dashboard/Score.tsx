@@ -7,18 +7,20 @@ type Props = {
   freshFoodsPercentage: NutritionSummary["freshFoodsPercentage"];
   highSugarItemsPercentage: NutritionSummary["highSugarItemsPercentage"];
   processedFoodPercentage: NutritionSummary["processedFoodPercentage"];
+  goodNutriScorePercentage: NutritionSummary["goodNutriScorePercentage"];
 };
 
 
 // Score component: renders the donut chart and score text.
-export default function Score({ nutritionScore, freshFoodsPercentage, highSugarItemsPercentage,processedFoodPercentage  }: Props) {
+export default function Score({ nutritionScore, freshFoodsPercentage, highSugarItemsPercentage, processedFoodPercentage, goodNutriScorePercentage }: Props) {
 
-  // mock data  
+  // mock data
 
   const data = [
     { name: "% fresh foods", value: freshFoodsPercentage, color: "#22c55e" },
     { name: "% high sugar items", value: highSugarItemsPercentage, color: "#f87171" },
     { name: "% processed food", value: processedFoodPercentage, color: "#facc15" },
+    { name: "% good nutri score food", value: goodNutriScorePercentage, color: "#3b82f6" },
   ];
   return (
     <div className="score-container">
@@ -40,7 +42,7 @@ export default function Score({ nutritionScore, freshFoodsPercentage, highSugarI
         </Pie>
       </PieChart>
       <div className="score-text">
-        <div className="score-number">{nutritionScore}</div>
+        <div className="score-number">{Math.round(nutritionScore)}</div>
         <p className="score-title">NutriScore</p>
       </div>
     </div>
