@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+//================================================
+// Models for NutriCheck App
+//================================================
+
+// 1. User Model
+// Stores basic user information
+
+model User {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  auth0Id           String?   @unique
+  anonymousId       String?   @unique
+  createdAt         DateTime  @default(now())
+  lastLogin         DateTime  @updatedAt
+  displayName       String?
+  preferences       Json?
+  receipts          Receipt[]
+  nutritionSummary  UserNutritionSummary?
+  groceryList       GroceryList?
+
+  @@map("users")
+}
+
+// 2. Receipt Model
+// Stores details for each uploaded grocery receipt.
+
+model Receipt {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  uploadedAt        DateTime  @default(now())
+  purchaseDate      DateTime
+  imageUrl          String
+  originalRawText   String
+  totalAmount       Float
+  currency          String
+
+  nutritionSummary  Json?
+
+  aiFeedbackReceipt String?
+  status            String   // Processing status: 'uploaded', 'processing', 'verified', 'analyzed'
+
+  userId            String  @db.ObjectId
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items             Item[]
+  @@map("receipts")
+}
+
+// 3. Item Model
+// Stores details for each item parsed from a receipt
+
+model Item {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  originalBillLabel String  // the item name extracted (uneditable)
+  aiSuggestedName   String  // AI's interpretation, (editable)
+  price             Float   // Price of the individual item
+  isFoodItem        Boolean // True if food, false if non-food (editable)
+
+  nutritionDetails  Json?
+
+  classification    String? // "Fresh Food", "High Sugar", "Processed", "Good Nutri-Score"
+  manualCorrection  Boolean @default(false)   // AI feedback loop
+  receiptId         String  @db.ObjectId
+  receipt           Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@map("items")
+}
+
+// 4. User Nutrition Summary Model (One-to-one with User)
+// Aggregates nutrition accross ALL of a user's verified receipts for dashboard
+
+model UserNutritionSummary {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @unique @db.ObjectId
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nutritionScore    Float   @default(0)
+  freshFoodsPercentage  Float @default(0)
+  highSugarItemsPercentage  Float @default(0)
+  processedFoodPercentage  Float  @default(0)
+  goodNutriScorePercentage  Float @default(0)
+  overallAiFeedback String?
+  lastUpdated       DateTime  @updatedAt
+
+  @@map("user_nutrition_summaries")
+}
+
+// 5. Grocery List Model (One-to-one with User)
+// Stores the user's smart grocery list suggestions
+
+model GroceryList {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @unique @db.ObjectId
+  user              User    @relation(fields: [userId], references:[id], onDelete: Cascade)
+  healthyItems      String[]
+  missingNutritionItems String[]
+  sinItems          String[]
+  lastGenerated     DateTime @updatedAt
+
+  @@map("grocery_lists")
+}

@@ -1,0 +1,76 @@
+
+.uploadPageWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  text-align: center;
+  background-color: #faf8ff;
+}
+
+
+.uploadPageTitle {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+
+.uploadButton {
+  background-color: #c084fc;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+.uploadButton:hover {
+  background-color: #a855f7;
+}
+
+
+.drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  height: 180px;
+  padding: 1rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 1rem;
+  background-color: #fff;
+  color: #666;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.drop-zone.dragging {
+  background-color: #f3e8ff;
+  border-color: #c084fc;
+}
+
+
+@media (max-width: 768px) {
+  .drop-zone {
+    display: none;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .uploadPageWrapper {
+    padding: 3rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
